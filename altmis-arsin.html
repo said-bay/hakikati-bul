@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Altmış Arşın</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=VT323&display=swap">
+<style>
+/* Layout: one centered column like a deep well — pixel screen with a life-tree gauge, story box, two choices, ending tracker */
+:root{
+  --bg:#0c0a16; --panel:#16132a; --ink:#f4ecd8; --dim:#a39cbc; --accent:#f2c14e; --line:#3a3466; --hot:#ff7a5a; --shadow:#5a1a3a; --deep:#05040c; --ring:#221d3e;
+  --display:"Pixelify Sans", ui-monospace, "Courier New", monospace;
+  --body:"VT323", ui-monospace, "Courier New", monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--body);padding-inline:16px;padding-block:24px 40px;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,230,.025) 0 1px,transparent 1px 3px)}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,6.5vw,46px);letter-spacing:.05em;margin:0;color:var(--accent);text-shadow:3px 3px 0 var(--shadow);text-wrap:balance}
+.tag{font-size:21px;color:var(--dim)}
+.screen{position:relative;border:4px solid var(--line);box-shadow:0 0 0 4px var(--bg),0 0 0 8px var(--ring),10px 10px 0 6px var(--deep);background:var(--deep)}
+.screen::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 4px)}
+canvas{display:block;width:100%;height:auto;max-width:100%;aspect-ratio:16/9;image-rendering:pixelated;image-rendering:crisp-edges}
+.place{position:absolute;z-index:1;left:8px;top:8px;font-family:var(--display);font-weight:500;font-size:13px;letter-spacing:.12em;text-transform:uppercase;background:rgba(13,15,11,.8);color:var(--ink);padding:4px 8px}
+.box{background:var(--panel);border:4px solid var(--ink);box-shadow:inset 0 0 0 4px var(--panel),inset 0 0 0 6px var(--line);padding:18px 20px 20px;display:flex;flex-direction:column;gap:14px;margin-top:6px}
+.ending-title{font-family:var(--display);font-weight:700;color:var(--accent);font-size:20px;letter-spacing:.04em;margin:0}
+.text{font-size:clamp(21px,4.2vw,26px);line-height:1.15;margin:0;min-height:8.2em;cursor:pointer}
+.choices{display:grid;gap:10px}
+.choice{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;font-size:clamp(21px,4.2vw,25px);line-height:1.1;color:var(--ink);background:transparent;border:2px solid var(--line);padding:9px 12px;cursor:pointer}
+.choice .key{font-family:var(--display);font-weight:700;font-size:14px;background:var(--line);color:var(--ink);padding:3px 8px;flex:none}
+.choice .lbl{min-width:0}
+/* hover only where there is a real mouse; on touch screens a tapped spot stays "hovered" */
+.choice:active,.choice:focus-visible{background:var(--accent);color:var(--deep);border-color:var(--accent);outline:none}
+@media (hover:hover) and (pointer:fine){.choice:hover{background:var(--accent);color:var(--deep);border-color:var(--accent);outline:none}}
+.choice:active .key,.choice:focus-visible .key{background:var(--deep);color:var(--accent)}
+@media (hover:hover) and (pointer:fine){.choice:hover .key{background:var(--deep);color:var(--accent)}}
+.choice:focus-visible{box-shadow:0 0 0 3px var(--hot)}
+footer{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap;font-size:21px;color:var(--dim)}
+.endings{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.endings b{color:var(--ink);font-weight:400;font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:5px}
+.dot{width:13px;height:13px;background:var(--ring);border:2px solid var(--line)}
+.dot.on{background:var(--accent);border-color:var(--accent)}
+.sound{font:inherit;font-size:20px;color:var(--dim);background:none;border:2px solid var(--line);padding:2px 10px;cursor:pointer}
+@media (hover:hover) and (pointer:fine){.sound:hover{color:var(--ink)}}
+.sound:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:19px;color:var(--dim);margin:0}
+.source{font-size:18px;color:var(--dim);margin:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:480px){.place{font-size:11px;letter-spacing:.08em}.box{padding:14px 14px 16px}}
+</style>
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.back{align-self:flex-start;font-family:var(--display);font-weight:500;font-size:14px;letter-spacing:.08em;color:var(--dim);text-decoration:none;border:2px solid var(--line);padding:5px 10px}
+.back:active,.back:focus-visible{color:var(--deep);background:var(--accent);border-color:var(--accent);outline:none}
+@media (hover:hover) and (pointer:fine){.back:hover{color:var(--deep);background:var(--accent);border-color:var(--accent)}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a class="back" href="./#back">‹ Tüm oyunlar</a>
+  <header>
+    <h1>ALTMIŞ ARŞIN</h1>
+    <span class="tag">İki kardeş, bir kuyu ve bin meyveli ağaç · 3 farklı son</span>
+  </header>
+
+  <div class="screen">
+    <canvas id="scene" width="160" height="90" role="img" aria-label="Sahne"></canvas>
+    <div class="place" id="place">Yol ayrımı</div>
+  </div>
+
+  <section class="box">
+    <p class="ending-title" id="etitle" hidden></p>
+    <p class="text" id="text" aria-hidden="true"></p>
+    <p class="sr" id="sr" aria-live="polite"></p>
+    <div class="choices">
+      <button class="choice" id="c1" type="button"><span class="key">1</span><span class="lbl"></span></button>
+      <button class="choice" id="c2" type="button"><span class="key">2</span><span class="lbl"></span></button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="endings"><span>Bulunan sonlar: <b id="ecount">0</b>/3</span><div class="dots" id="dots"></div></div>
+    <button class="sound" id="snd" type="button">Ses: açık</button>
+  </footer>
+  <p class="hint">Seçmek için tıkla ya da klavyeden 1 / 2 tuşuna bas. Yazıyı hızlandırmak için metne tıkla.</p>
+  <p class="source">Risale-i Nur, Sözler, Sekizinci Söz'deki temsili hikayeden uyarlanmıştır.</p>
+</div>
+
+<script src="ses.js"></script>
+<script>
+(() => {
+const W = 160, H = 90, GROUND = 72;
+const cv = document.getElementById('scene');
+const main = cv.getContext('2d');
+let g = main;
+const OUT = '#120e10';
+
+const C = {
+  star:'#f6f2dc', starDim:'#6f7fb8', starMid:'#b9c3e8', moon:'#f3ecd2', moonSh:'#c9bf9f', halo:'#8ea3dc', haloDk:'#4a5a9a',
+  yellow:'#ffd23f', gold:'#e8b048', goldDk:'#a8620f', goldHi:'#fff0a0', orange:'#ff8c2e', red:'#d8323c', redDk:'#8e1f33',
+  win:'#ffcf5a', winHi:'#fff3b8',
+  wood:'#7a4a2a', woodDk:'#4f2e1a', woodHi:'#9a6438', woodDeep:'#2e1a0e',
+  stone:'#9a968a', stoneDk:'#6a665c', stoneHi:'#c0bcae',
+  green:'#2f8a4a', greenDk:'#1a5a30', greenHi:'#5ab85f', leaf:'#3fae55', grass:'#5a9a4a', grassHi:'#7ab86a', grassDk:'#3a7a34',
+  skin:'#e8a878', skinSh:'#b87a54', mouth:'#8a3a3a',
+  water:'#2a6ac4', waterHi:'#8ec0f0',
+  white:'#f4f1e6', grey:'#9a9ab0', greyHi:'#d0d0e0', fog:'#e8dcc0',
+  dirt:'#a8845a', dirtDk:'#7a5a3a', dirtHi:'#c8a478', pave:'#cfc6b0', paveDk:'#a89e86',
+  teal:'#3fd1c9', tealHi:'#c8fff8', pink:'#ff8fb0', steel:'#c8ccd8', steelDk:'#6a6e7c', pack:'#7a5a32', packDk:'#54391e', roll:'#a89068'
+};
+const SKY = {
+  day:['#3a78c8','#5a98dc','#8ac0ec','#c4e2f4','#f2ead0'],
+  dusk:['#1e1a4a','#4a2a6a','#9a3a6a','#e0644a','#f6a050'],
+  dawn:['#2a2350','#5a3f88','#b0628a','#f2956a','#ffd08a'],
+  night:['#06051a','#0e1440','#1a2560','#2a3d7e'],
+  grey:['#3a3e48','#4a4e58','#5a5e68','#6a6e76','#7a7e84']
+};
+
+/* ---------- pixel helpers ---------- */
+function R(x,y,w,h,c){g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+function P(x,y,c){R(x,y,1,1,c);}
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function ell(cx,cy,rx,ry,c){cx=Math.round(cx);cy=Math.round(cy);rx=Math.max(0,Math.round(rx));ry=Math.max(0,Math.round(ry));if(ry===0){R(cx-rx,cy,rx*2+1,1,c);return;}for(let dy=-ry;dy<=ry;dy++){const hw=Math.round(rx*Math.sqrt(Math.max(0,1-(dy*dy)/(ry*ry))));R(cx-hw,cy+dy,hw*2+1,1,c);}}
+const BAYER=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+const th=(x,y)=>(BAYER[((y%4)+4)%4][((x%4)+4)%4]+.5)/16;
+function grad(y0,y1,cols){const n=cols.length-1;for(let y=y0;y<y1;y++){const f=(y-y0)/(y1-y0)*n,i=Math.min(n-1,Math.floor(f)),fr=f-i;let run=0,cur=null;for(let x=0;x<=W;x++){const c=x<W?(fr>th(x,y)?cols[i+1]:cols[i]):null;if(c!==cur){if(cur)R(x-run,y,run,1,cur);cur=c;run=1;}else run++;}}}
+function ditherDisc(cx,cy,r,c,d){for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(dx*dx+dy*dy>r*r)continue;if(d>th(cx+dx,cy+dy))P(cx+dx,cy+dy,c);}}
+function light(cx,cy,r,c,a){g.save();g.globalCompositeOperation='lighter';[1,.68,.4].forEach((k,i)=>{g.globalAlpha=a*(i+1)/3;const rr=Math.max(1,Math.round(r*k));ell(cx,cy,rr,rr,c);});g.restore();}
+function shade(a,c='#020208'){g.globalAlpha=a;R(0,0,W,H,c);g.globalAlpha=1;}
+function shadow(cx,base,rx){g.globalAlpha=.28;ell(cx,base,rx,1,'#2a1418');g.globalAlpha=1;}
+function line(x0,y0,x1,y1,c){x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let e=dx+dy;for(;;){P(x0,y0,c);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx;}if(e2<=dx){e+=dx;y0+=sy;}}}
+function spr(rows,x,y,map,o=OUT,flip=false){
+  x=Math.round(x);y=Math.round(y);
+  const wid=Math.max(...rows.map(r=>r.length));
+  const op=(r,c)=>r>=0&&r<rows.length&&c>=0&&c<rows[r].length&&rows[r][c]!=='.'&&map[rows[r][c]];
+  const X=c=>x+(flip?wid-1-c:c);
+  if(o){for(let r=0;r<rows.length;r++)for(let c=0;c<rows[r].length;c++){if(!op(r,c))continue;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]])if(!op(r+dy,c+dx))R(X(c+dx),y+r+dy,1,1,o);}}
+  for(let r=0;r<rows.length;r++)for(let c=0;c<rows[r].length;c++)if(op(r,c))R(X(c),y+r,1,1,map[rows[r][c]]);
+}
+function shapes(list,o=OUT){
+  if(o)for(const s of list){if(s[0]==='e')ell(s[1],s[2],s[3]+1,s[4]+1,o);else R(s[1]-1,s[2]-1,s[3]+2,s[4]+2,o);}
+  for(const s of list){if(s[0]==='e')ell(s[1],s[2],s[3],s[4],s[5]);else R(s[1],s[2],s[3],s[4],s[5]);}
+}
+function bubble(x,y,t,mark){shapes([['r',x,y,15,8,C.white]]);R(x+3,y+8,2,2,C.white);P(x+2,y+10,C.white);
+  if(mark==='!'){R(x+7,y+1,1,4,OUT);P(x+7,y+6,OUT);}else if(mark==='?'){R(x+6,y+1,3,1,OUT);P(x+9,y+2,OUT);P(x+8,y+3,OUT);P(x+7,y+4,OUT);P(x+7,y+6,OUT);}
+  else if(t%9>2){P(x+3,y+4,OUT);P(x+7,y+4,OUT);P(x+11,y+4,OUT);}}
+
+/* ---------- world pieces ---------- */
+Object.assign(C,{cobble:'#c8b494',cobbleDk:'#a8946e',wall:'#f2e8d4',wallSh:'#d8c8a8',canteen:'#6a7a6a',strap:'#6a4a2a',gaiter:'#ece4cc'});
+const STARS=(()=>{const r=rng(7),a=[];for(let i=0;i<120;i++)a.push({x:r()*W|0,y:r()*72|0,ph:r()*6.28,b:r()<.1,d:r()<.55});return a;})();
+const inMoon=(s,m)=>m&&((s.x-m[0])**2+(s.y-m[1])**2<(m[2]+4)**2);
+function starsBg(maxY,m){for(const s of STARS){if(s.y>maxY||inMoon(s,m))continue;if(s.b){P(s.x-1,s.y,C.starDim);P(s.x+1,s.y,C.starDim);P(s.x,s.y-1,C.starDim);P(s.x,s.y+1,C.starDim);P(s.x,s.y,C.star);}else P(s.x,s.y,s.d?C.starDim:C.starMid);}}
+function starsFx(t,maxY,m){for(const s of STARS){if(s.y>maxY||inMoon(s,m))continue;const v=Math.sin(t*.3+s.ph);if(v>.8){P(s.x,s.y,C.star);if(s.b){P(s.x-2,s.y,C.starDim);P(s.x+2,s.y,C.starDim);P(s.x,s.y-2,C.starDim);P(s.x,s.y+2,C.starDim);}}}}
+function milkyWay(slope,off){for(let x=0;x<W;x++)for(let y=0;y<56;y++){const d=Math.abs(y-(off+x*slope));if(d<7&&(1-d/7)*.4>th(x,y))P(x,y,'#34407e');}}
+function moon(x,y,r){ditherDisc(x,y,r+9,C.haloDk,.18);ditherDisc(x,y,r+5,C.halo,.28);ditherDisc(x,y,r+2,C.halo,.55);ell(x,y,r,r,C.moonSh);ell(x-1,y-1,r-1,r-1,C.moon);ell(x+2,y-2,1,1,C.moonSh);P(x+3,y+2,C.moonSh);P(x-r+3,y-r+3,C.white);}
+function sun(x,y,r,warm){const hc=warm?'#ffd8a0':'#fff4c8';ditherDisc(x,y,r+9,hc,.18);ditherDisc(x,y,r+5,hc,.35);ditherDisc(x,y,r+2,hc,.6);ell(x,y,r,r,warm?'#ffd070':'#fff0a0');ell(x-1,y-1,r-2,r-2,warm?'#ffe8a8':'#fffbe0');}
+function cloud(x,y,w,dark){const c=dark?'#5a606e':'#d8e4f4',hi=dark?'#6e7482':'#ffffff',dk=dark?'#3e434e':'#b8c8e0';ell(x,y+1,w,2,dk);ell(x,y,w,2,c);ell(x-w*.35,y-1,w*.45,2,c);ell(x+w*.25,y-2,w*.4,2,hi);ell(x-w*.3,y-2,w*.25,1,hi);}
+function clouds(t,list,dark){list.forEach(([x0,y,w],i)=>{const x=((x0+t*(.12+i*.04))%(W+50))-25;cloud(x,y,w,dark);});}
+function birds(t,n,y0){for(let i=0;i<n;i++){const bx=((t*.9+i*37)%(W+20))-10,by=y0+i*5+Math.round(Math.sin(t*.4+i)),up=(t+i)%6<3;P(bx,by,OUT);P(bx-1,by-(up?1:0),OUT);P(bx+1,by-(up?1:0),OUT);P(bx-2,by-(up?1:-1),OUT);P(bx+2,by-(up?1:-1),OUT);}}
+function crows(t,n){for(let i=0;i<n;i++){const bx=((t*.6+i*53)%(W+20))-10,by=14+i*7,up=(t+i)%8<4;R(bx-1,by,3,1,OUT);P(bx-2,by-(up?1:-1),OUT);P(bx+2,by-(up?1:-1),OUT);P(bx-3,by-(up?2:-1),OUT);P(bx+3,by-(up?2:-1),OUT);}}
+function vultures(t,cx,cy){for(let i=0;i<2;i++){const a=t*.05+i*Math.PI,x=cx+Math.cos(a)*16,y=cy+Math.sin(a)*5,up=(t+i)%10<5;R(x-1,y,3,1,'#2a2024');R(x-4,y-(up?1:0),3,1,'#2a2024');R(x+2,y-(up?1:0),3,1,'#2a2024');P(x-5,y-(up?2:-1),'#2a2024');P(x+5,y-(up?2:-1),'#2a2024');}}
+function notes(t,x,y){[0,1,2].forEach(i=>{const a=(t*.8+i*9)%26;if(a<20){const nx=x+i*5+Math.sin(a*.4+i)*2,ny=y-a,c=[C.yellow,C.pink,C.tealHi][i];R(nx,ny,2,2,c);R(nx+1,ny-4,1,4,c);P(nx+2,ny-4,c);P(nx+3,ny-3,c);}});}
+function hillsBand(seed,base,amp,c,hi){for(let x=0;x<W;x++){const h=Math.round(amp*(.55+.3*Math.sin(x*.05+seed)+.15*Math.sin(x*.13+seed*2)));R(x,base-h,1,h+40,c);P(x,base-h,hi);}}
+function mountains(seed,base,col,colDk,snow){const r=rng(seed),pk=[];for(let i=0;i<5;i++)pk.push([r()*W,10+r()*14]);
+  for(let x=0;x<W;x++){let h=0,who=null;for(const p of pk){const v=p[1]-Math.abs(x-p[0])*.75;if(v>h){h=v;who=p;}}h=Math.round(h);if(h<=0)continue;const top=base-h;R(x,top,1,h+30,x>who[0]?colDk:col);if(snow&&h>who[1]-5)R(x,top,1,Math.min(3,h-(who[1]-8)),snow);}}
+function cypress(x,base,h,c='#1e5a3a',hi='#2e7a4a'){shapes([['e',x,base-h/2,3,Math.round(h/2),c]]);ell(x-1,base-h/2-1,1,Math.round(h/2)-2,hi);R(x,base-2,1,2,C.woodDk);}
+function pine(x,base,h,pal){const[o,d,m,hi]=pal;R(x-1,base-3,3,3,'#2e1c10');const hh=h-3,top=base-h,tt=Math.max(3,Math.ceil(hh/3));P(x,top-1,o);
+  for(let i=0;i<hh;i++){const tier=Math.floor(i/tt),k=i%tt,w=Math.max(0,Math.round(k*.85+tier*1.4));R(x-w-1,top+i,w*2+3,1,o);R(x-w,top+i,w*2+1,1,m);const sw=Math.ceil(w*.55);R(x+w-sw+1,top+i,sw,1,d);if(w>1&&k%2===0)R(x-w+1,top+i,Math.max(1,Math.floor(w*.4)),1,hi);}}
+const PINE_FAR=['#06140f','#0a2018','#0e2a1f','#13352a'],PINE_NEAR=['#030b08','#0e3d27','#185a35','#2f8a4a'];
+function bareTree(x,base,h,c='#4a3a3a'){line(x,base,x,base-h,c);line(x,base-h*.5,x-6,base-h*.8,c);line(x,base-h*.6,x+5,base-h*.95,c);line(x-3,base-h*.65,x-5,base-h,c);line(x,base-h*.8,x+2,base-h-2,c);R(x-1,base-h*.4,1,h*.4,c);}
+function thorns(x,base,w){for(let i=0;i<w;i+=2){line(x+i,base,x+i+((i*7)%3)-1,base-3-((i*5)%3),'#5a4a2a');P(x+i,base-4,'#8a3a3a');}}
+function tree(x,base,r){shapes([['r',x-1,base-r-6,3,r+6,C.wood]]);R(x-1,base-r-6,1,r+6,C.woodHi);shapes([['e',x,base-r-8,r,r-1,C.green]]);ell(x-2,base-r-10,r-3,r-4,C.leaf);ell(x-3,base-r-12,Math.max(1,r-6),Math.max(1,r-7),C.greenHi);}
+function fire(x,base,t){const r=rng((t|0)*7+3);
+  [[C.redDk,6,8],[C.red,5,7],[C.orange,4,5],[C.yellow,2,3],[C.winHi,1,1]].forEach(([c,w,hm])=>{for(let i=-w;i<=w;i++){const hh=Math.round(hm*(1-Math.abs(i)/(w+1))*(.6+r()*.6));if(hh>0)R(x+i,base-hh,1,hh,c);}});
+  shapes([['r',x-6,base,13,2,C.woodDk]]);for(let i=0;i<2;i++){const a=(t+i*6)%12;P(x+Math.round((r()-.5)*6),base-9-a,a<6?C.yellow:C.orange);}}
+function comet(x,y,len,t){for(let i=len;i>0;i--){const px=x-i,py=y-i*.42,w=1+Math.floor(i/9),a=1-i/len;g.globalAlpha=a*.85;ell(px,py,w,Math.max(0,w-1),i<len*.25?C.white:(i<len*.55?C.tealHi:'#5a8ab8'));if(i%3===0){g.globalAlpha=a*.5;P(px-2,py+w+1,C.tealHi);}}g.globalAlpha=1;light(x,y,9,C.tealHi,.2+.05*Math.sin(t*.6));ell(x,y,2,2,C.white);P(x+1,y-1,C.white);}
+function road(vx,vy,bl,br,base,edge,mark){for(let y=vy;y<H;y++){const t=(y-vy)/(H-vy),xl=vx+(bl-vx)*t,xr=vx+(br-vx)*t;R(xl,y,xr-xl+1,1,base);P(xl,y,edge);P(xr,y,edge);if(mark&&y%4<2&&t>.1)R((xl+xr)/2,y,Math.max(1,t*2),1,mark);}}
+function skyline(x,base,c,win){R(x,base-6,40,6,c);[[x+4,8],[x+14,12],[x+26,9]].forEach(([hx,h])=>{R(hx,base-h,8,h,c);});ell(x+20,base-12,5,4,c);R(x+31,base-20,2,20,c);P(x+31,base-22,c);R(x+30,base-15,4,1,c);if(win){P(x+6,base-5,C.win);P(x+17,base-8,C.win);P(x+28,base-5,C.win);}}
+function telegraph(x,base,h){R(x,base-h,1,h,'#5a3a22');R(x-2,base-h+1,5,1,'#5a3a22');P(x-2,base-h,C.greyHi);P(x+2,base-h,C.greyHi);}
+function wires(points){for(let i=0;i<points.length-1;i++){const[a,b]=[points[i],points[i+1]];for(let k=0;k<=20;k++){const f=k/20;P(a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f+Math.sin(f*Math.PI)*2,'#3a3a44');}}}
+function stoneWall(x0,x1,y){for(let x=x0;x<x1;x+=4){shapes([['r',x,y-3,3,3,C.stone]],null);P(x,y-3,C.stoneHi);}R(x0,y,x1-x0,1,C.stoneDk);}
+function guardPost(x,base){shapes([['r',x,base-14,14,14,'#d8c8a4']]);for(let i=0;i<4;i++)R(x-2+i,base-15-i,18-i*2,1,'#a8402a');shapes([['r',x+5,base-8,4,8,C.woodDk]]);R(x+2,base-12,3,3,'#2e3e64');}
+function cart(x,base){line(x,base-6,x+16,base-10,C.woodDk);line(x,base-5,x+16,base-9,C.wood);R(x+2,base-12,1,6,C.wood);ell(x+4,base-3,3,3,OUT);ell(x+4,base-3,2,2,C.wood);P(x+4,base-3,OUT);}
+function bones(x,y){R(x,y,4,1,'#e8e0d0');P(x-1,y-1,'#e8e0d0');P(x-1,y+1,'#e8e0d0');P(x+4,y-1,'#e8e0d0');P(x+4,y+1,'#e8e0d0');}
+function flag(x,y,t,c=C.red){line(x,y,x,y+14,C.woodDk);const f=t%8<4;for(let i=0;i<8;i++){const dy=Math.round(Math.sin(i*.7+(f?0:1.6)));R(x+1+i,y+1+dy,1,5,i%2?c:'#b02a32');}P(x,y-1,C.gold);}
+function bunting(x0,y0,x1,sag,seed){const cols=[C.red,C.yellow,C.white,C.red,C.gold];const n=Math.round(x1-x0);for(let i=0;i<=n;i++){const f=i/n,x=x0+(x1-x0)*f,y=y0+Math.sin(f*Math.PI)*sag;P(x,y,OUT);if(i%6===0&&i<n){const c=cols[(i/6+seed)%cols.length];R(x,y+1,4,1,c);R(x+1,y+2,2,1,c);P(x+1,y+3,c);}}}
+function mosque(x,base,col,o={}){const lead=o.lead||'#8a96a8',leadHi=o.leadHi||'#b0bccc',stone=col,dk=o.dk||'#c8b898';
+  shapes([['r',x+22,base-50,5,50,stone]]);R(x+26,base-50,1,50,dk);shapes([['r',x+20,base-38,9,2,dk]]);
+  for(let i=0;i<8;i++)R(x+24-Math.floor(i/3),base-58+i,1+Math.floor(i/3)*2,1,lead);P(x+24,base-59,C.gold);
+  shapes([['r',x-18,base-16,36,16,stone]]);R(x+14,base-16,4,16,dk);shapes([['e',x-12,base-16,7,5,lead],['e',x+12,base-16,7,5,lead]]);R(x-19,base-16,38,2,stone);
+  shapes([['r',x-10,base-24,20,8,stone]]);for(let k=-8;k<9;k+=4)R(x+k,base-22,2,3,'#3a4a6a');
+  shapes([['e',x,base-24,12,10,lead]]);R(x-13,base-24,27,1,dk);ell(x-3,base-28,5,4,leadHi);R(x,base-38,1,4,C.gold);}
+const HOUSE_PALS={
+  cream:{wall:'#f4ead6',sh:'#d8c8a8',stone:'#b8a888',stoneDk:'#98886a',roof:'#c8643a',roofDk:'#a04a2a',roofHi:'#e88a5a'},
+  ochre:{wall:'#f0cc88',sh:'#cca464',stone:'#a89878',stoneDk:'#887858',roof:'#b8542e',roofDk:'#8e3c20',roofHi:'#d8784a'},
+  rose:{wall:'#f2c8c0',sh:'#d0a098',stone:'#b0a090',stoneDk:'#908070',roof:'#c8643a',roofDk:'#a04a2a',roofHi:'#e88a5a'},
+  sky:{wall:'#cfe0ea',sh:'#a8bccc',stone:'#a8a8a0',stoneDk:'#888880',roof:'#b8542e',roofDk:'#8e3c20',roofHi:'#d8784a'}
+};
+function ottomanHouse(x,base,w,h,pal,o={}){const sH=10,top=base-h,ub=base-sH;
+  shapes([['r',x+1,ub,w-2,sH,pal.stone]]);for(let y=ub+2;y<base;y+=3)for(let k=x+1+(((y-ub)/3)%2)*3;k<x+w-1;k+=6)R(k,y,5,1,pal.stoneDk);
+  const dx=x+Math.round(w/2)-3;shapes([['r',dx,base-8,6,8,C.woodDk]]);ell(dx+3,base-8,3,2,C.woodDk);R(dx+3,base-8,1,8,'#3a2214');P(dx+4,base-4,C.gold);
+  shapes([['r',x-1,top,w+2,ub-top,pal.wall]]);R(x+w-2,top,3,ub-top,pal.sh);R(x-1,top,w+2,1,C.woodDk);R(x-1,ub-2,w+2,2,C.woodDk);R(x-1,top,1,ub-top,C.woodDk);R(x+w,top,1,ub-top,C.woodDk);
+  line(x,ub,x+3,ub+3,C.woodDk);line(x+w-1,ub,x+w-4,ub+3,C.woodDk);
+  const n=Math.max(2,Math.floor((w-2)/8)),sp=(w-2)/n,wh=Math.max(5,Math.min(10,ub-top-8));
+  for(let i=0;i<n;i++){const wx=Math.round(x+1+i*sp+(sp-5)/2),wy=top+4;shapes([['r',wx,wy,5,wh,o.lit?C.win:'#2e3e64']]);if(!o.lit)R(wx+1,wy+1,1,wh-3,'#7a9ad0');R(wx+2,wy,1,wh,C.woodDk);R(wx,wy+Math.floor(wh/2),5,1,C.woodDk);R(wx-1,wy+wh,7,1,C.woodHi);if(o.flowers){P(wx,wy+wh-1,C.red);P(wx+2,wy+wh-1,C.pink);P(wx+4,wy+wh-1,C.red);}}
+  const rh=6;for(let i=0;i<rh;i++){const rw=w+6-i*2;R(x-4+i,top-1-i,rw+2,1,OUT);}R(x-4+rh,top-1-rh,w+6-rh*2+2,1,OUT);
+  for(let i=0;i<rh;i++){const rw=w+6-i*2;R(x-3+i,top-1-i,rw,1,i%2?pal.roof:pal.roofDk);for(let k=x-3+i+(i%2)*2;k<x-3+i+rw;k+=4)P(k,top-1-i,pal.roofHi);}R(x-3,top-1,w+6,1,pal.roofDk);}
+function cesme(x,base){shapes([['r',x,base-18,16,18,'#ece6da']]);R(x+13,base-18,3,18,'#d0c8b8');shapes([['r',x-1,base-20,18,2,'#d0c8b8']]);ell(x+8,base-21,6,2,'#8a96a8');ell(x+8,base-12,4,3,'#c8beac');R(x+4,base-12,9,6,'#c8beac');R(x+7,base-12,2,2,'#8a96a8');shapes([['r',x-2,base-5,20,5,'#dcd4c4']]);R(x-1,base-5,18,1,'#7ab0e0');}
+function cityGate(x,base,dim){const wc=dim?'#8a8a86':'#e0d0aa',wd=dim?'#6a6a66':'#c0b08c',wh=dim?'#9a9a96':'#f0e4c4';
+  shapes([['r',x-34,base-32,68,32,wc]]);for(let y=base-28;y<base;y+=4)for(let k=x-34+((y/4)%2)*4;k<x+34;k+=8)R(k,y,7,1,wd);R(x-34,base-32,68,1,wh);
+  for(let k=x-34;k<x+34;k+=6)shapes([['r',k,base-36,4,4,wc]]);
+  [x-44,x+32].forEach(tx=>{shapes([['r',tx,base-46,12,46,wc]]);R(tx+9,base-46,3,46,wd);for(let k=tx;k<tx+12;k+=4)shapes([['r',k,base-50,3,4,wc]]);shapes([['r',tx+4,base-38,4,6,'#2a1a10']]);ell(tx+6,base-38,2,1,'#2a1a10');shapes([['r',tx+4,base-22,4,6,'#2a1a10']]);});
+  shapes([['r',x-11,base-22,22,22,'#2a1a10']]);ell(x,base-22,11,7,'#2a1a10');R(x-11,base-22,22,1,'#2a1a10');for(let a=0;a<=Math.PI;a+=.08){P(x+Math.cos(a)*12,base-22-Math.sin(a)*8,dim?wd:C.gold);}R(x-12,base-22,1,22,dim?wd:C.gold);R(x+12,base-22,1,22,dim?wd:C.gold);
+  shapes([['r',x-12,base-31,24,5,dim?'#4a4a4a':'#1e5a3a']]);if(!dim)for(let k=x-10;k<x+10;k+=3){P(k,base-29,C.gold);P(k+1,base-28,C.gold);}
+  R(x-9,base-20,8,20,'#4f2e1a');R(x+1,base-20,8,20,'#4f2e1a');for(let y=base-18;y<base;y+=4){P(x-7,y,C.gold);P(x-3,y,C.gold);P(x+3,y,C.gold);P(x+7,y,C.gold);}}
+function board(x,y,glow){shapes([['r',x+2,y+20,2,14,C.wood],['r',x+40,y+20,2,14,C.wood]]);shapes([['r',x,y,44,21,C.woodHi]]);R(x+1,y+1,42,19,'#c8a070');R(x+21,y+1,1,19,C.woodDk);for(let k=x+2;k<x+42;k+=5)P(k,y+19,'#a88050');
+  line(x+3,y+4,x+8,y+4,OUT);P(x+4,y+3,OUT);P(x+4,y+5,OUT);line(x+35,y+4,x+40,y+4,OUT);P(x+39,y+3,OUT);P(x+39,y+5,OUT);
+  const face=(fx,fy,happy)=>{R(fx,fy,3,3,happy?C.yellow:'#6a7a9a');P(fx,fy,OUT);P(fx+2,fy,OUT);if(happy)P(fx+1,fy+2,C.mouth);else{P(fx,fy+2,'#3a3a5a');P(fx+2,fy+2,'#3a3a5a');}};
+  for(let i=0;i<10;i++){face(x+3+(i%5)*4,y+8+Math.floor(i/5)*5,i===9);face(x+24+(i%5)*4,y+8+Math.floor(i/5)*5,i!==9);}
+  if(glow)light(x+32,y+12,12,C.yellow,.1);}
+function armyTent(x,base){for(let i=0;i<16;i++){const w=4+i*2;R(x-w/2-1,base-16+i,w+2,1,OUT);R(x-w/2,base-16+i,w/2,1,'#8a8a5a');R(x,base-16+i,w/2,1,'#6a6a42');}for(let i=0;i<10;i++){const w=Math.max(1,i);R(x-w/2,base-10+i,w,1,'#1e1e14');}line(x,base-17,x,base-20,C.woodDk);}
+
+/* ---------- characters ---------- */
+const BASE=[".....ww.....","...wwwwww...","..wwwwwwWw..","..WWWWWWWW..","..sssssssS..","..sesssesS..","..sesssesS..","..sssmsssS..","...SsssSS...","....SSS.....","..rrrrrrrr..",".hrrrrRrrrr.",".hrrrrRrrrr.","rrryyyyyyrrr","s.hrrrRrrr.s","..hrrrRrrr..","..hrrrRrrr..","..rrrRRrrr..","..rrr..rrr..","..kkk..kkk.."];
+function rowsFor(o){const r=BASE.slice();
+  if(o.beard){r[7]="..sbbbbbbS..";r[8]="...bbbbbb...";r[9]="....bbbb....";}
+  if(o.mustache){r[7]="..sbbsbbsS..";}
+  if(o.mask){r[7]="..mmmmmmmm..";r[8]="...mmmmmm...";}
+  if(o.happy){r[7]=o.mustache?"..sbbbbbsS..":"..smsssmsS..";r[8]="...SmmmSS...";}
+  if(o.sad){r[7]=o.tears?"..sxmmmxsS..":"..ssmmmssS..";r[8]="...mSSSmS...";}
+  if(o.strap){r[10]="..qrrrrrrr..";r[11]=".hrqrrRrrrr.";r[12]=".hrrqrRrrrr.";}
+  if(o.epaulette){r[10]="yyrrrrrrrryy";}
+  if(o.gaiters){r[17]="..ggg..ggg..";r[18]="..ggg..ggg..";}
+  if(o.walk===1){r[17]=o.gaiters?"..rrrRRrrr..":r[17];r[18]=o.gaiters?".ggg....ggg.":".rrr....rrr.";r[19]=".kkk....kkk.";}
+  if(o.walk===2){r[18]=o.gaiters?"...ggg.ggg..":"...rrr.rrr..";r[19]="...kkk.kkk..";}
+  if(o.up){r[0]="s....ww....s";r[1]="r..wwwwww..r";r[2]="r.wwwwwwWw.r";r[3]="rrWWWWWWWWrr";r[14]="..hrrrRrrr..";}
+  if(o.point){r[11]=".hrrrrRrrrrrrs";r[14]="s.hrrrRrrr..";}
+  if(o.beg){r[12]=".hrrrrRrrrrss";r[14]="s.hrrrRrrr..";}
+  if(o.clap){r[12]="..hrrsRsrr..";r[14]="..hrrrRrrr..";}
+  if(o.sit)return r.slice(0,15).concat(["rrrrrrRrrrrr","kRRRRRRRRRRk"]);
+  return r;}
+const MAPS={
+  soldierA:{w:'#c8323c',W:'#8e1f33',s:C.skin,S:C.skinSh,e:OUT,m:C.mouth,x:C.waterHi,b:'#3a2418',r:'#2e4a8a',h:'#4a6aaa',R:'#1e3060',y:C.gold,q:C.strap,g:C.gaiter,k:'#1a1410'},
+  soldierB:{w:'#c8323c',W:'#8e1f33',s:'#d89868',S:'#a86a44',e:OUT,m:C.mouth,x:C.waterHi,b:'#2a1a12',r:'#5a6a3a',h:'#7a8a52',R:'#3e4a26',y:'#8a7a4a',q:C.strap,g:'#c8c0a8',k:'#1a1410'},
+  commander:{w:'#c8323c',W:C.gold,s:'#d89868',S:'#a86a44',e:OUT,m:C.mouth,b:'#d8d8e0',r:'#1e2a5a',h:'#3a4a8a',R:'#121a3a',y:C.gold,q:C.gold,g:'#1e2a5a',k:'#0e0c10'},
+  guide:{w:'#e8dcc0',W:'#c0b090',s:'#e0a074',S:'#b07a50',e:OUT,b:'#f0f0f6',r:'#7a5a3a',h:'#9a7a50',R:'#523a22',y:'#c8323c',k:'#5a3a22'},
+  bandit:{w:'#2a2434',W:'#14101c',s:'#c88a5a',S:'#9a6440',e:OUT,m:'#3a3448',r:'#5a5468',h:'#76708a',R:'#3a3648',y:C.red,k:'#2a1a12'},
+  folkA:{w:'#8a5ac8',W:'#6a3aa8',s:'#e0a074',S:'#b07a50',e:OUT,m:C.mouth,x:C.waterHi,r:'#d8a040',h:'#f0c060',R:'#a87420',y:C.red,k:'#5a3a22'},
+  folkB:{w:'#f2ece0',W:'#c8bfa8',s:'#c88a5a',S:'#9a6440',e:OUT,m:C.mouth,x:C.waterHi,b:'#3a2a24',r:'#3f8a4a',h:'#5aaa6a',R:'#2a5e34',y:'#f2ece0',k:'#5a3a22'},
+  folkC:{w:'#ff8fb0',W:'#d86a8a',s:C.skin,S:C.skinSh,e:OUT,m:C.mouth,x:C.waterHi,r:'#2aa8a0',h:'#5ac8c0',R:'#1a7068',y:C.yellow,k:'#5a3a22'}
+};
+function person(kind,x,base,o={}){const rows=rowsFor(o);if(!o.noShadow)shadow(x+6,base,6);spr(rows,x,base-rows.length,MAPS[kind],OUT,!!o.flip);return base-rows.length;}
+function pack(x,top,flip){const px=flip?x+10:x-4;shapes([['r',px,top+10,6,9,C.pack]]);R(px+(flip?4:0),top+10,2,9,C.packDk);R(px,top+13,6,1,C.packDk);shapes([['r',px-1,top+8,8,2,C.roll]]);R(px,top+8,6,1,'#c8b088');P(px+3,top+15,C.gold);
+  shapes([['e',flip?px+7:px-1,top+17,1,2,C.canteen]]);}
+function rifle(x,top,mode,flip){const m=v=>flip?x+11-(v-x):v;
+  if(mode==='shoulder'){line(m(x+11),top+16,m(x+12),top+9,C.woodHi);line(m(x+12),top+9,m(x+13),top+1,C.steelDk);P(m(x+13),top,C.steel);P(m(x+13),top-1,C.steel);}
+  else if(mode==='aim'){line(m(x+3),top+12,m(x+8),top+12,C.woodHi);R(Math.min(m(x+3),m(x+5)),top+13,3,1,C.woodHi);line(m(x+8),top+11,m(x+20),top+11,C.steelDk);P(m(x+21),top+11,C.steel);P(m(x+22),top+11,C.steel);P(m(x+23),top+11,C.steel);}
+  else if(mode==='lean'){line(x,top+20,x+2,top+4,C.woodHi);line(x+2,top+4,x+3,top-4,C.steelDk);P(x+3,top-5,C.steel);P(x+3,top-6,C.steel);}}
+function soldier(kind,x,base,o={}){const kit=kind!=='bandit'&&kind!=='guide';const oo=Object.assign({strap:kit&&kind!=='commander',gaiters:kit,epaulette:kind==='commander'},o);
+  const top=base-(o.sit?17:20);if(o.pack)pack(x,top,!!o.flip);person(kind,x,base,oo);
+  P(o.flip?x+3:x+8,top+1,OUT);P(o.flip?x+2:x+9,top+2,OUT);
+  if(o.rifle)rifle(x,top,o.rifle,!!o.flip);
+  if(o.medal){P(x+4,top+10,C.red);P(x+4,top+11,C.red);ell(x+4,top+12,1,1,C.gold);P(x+4,top+12,C.goldHi);}}
+const WOLF=[".g.g............",".gggg..........G","eggGgg.......GG.","nggggg......GG..",".wwgggggggggGG..","..wggggggggggg..","..wwgggGgggggg..","..gg.gg...gg.gg.","..gg.gg...gg.gg.","..kk.kk...kk.kk."];
+const WOLF_HOWL=["....g...........","...ggg..........","..gegg..........","..gggg..........","..ggggg.........","...wggggggggG...","...wgggggggGG...","...wwggggggggG..","...gg.gg..gg.gg.","...kk.kk..kk.kk."];
+const WOLFM={g:'#7a7a90',G:'#5a5a70',w:'#b8b8c8',e:C.yellow,n:OUT,k:'#3a3a4e'};
+const DOG=["..d.......","dddd....d.","dedd...d..","ddddddd...",".ddddddd..",".d.d..d.d."];
+const OWL=[".o.o.","ooooo","eoooe","ooYoo",".ooo.","..o.."];
+function bread(x,y){shapes([['e',x,y,3,2,'#d8a050']]);line(x-2,y-1,x-1,y,'#a86a2a');line(x+1,y-1,x+2,y,'#a86a2a');}
+function zurna(x,y,t){line(x,y,x+6,y-3,C.woodHi);ell(x+7,y-3,1,1,C.gold);}
+
+/* ---------- pieces for this story ---------- */
+Object.assign(MAPS,{
+  goodBro:{w:'#3aa86a',W:'#2a7a4a',s:C.skin,S:C.skinSh,e:OUT,m:C.mouth,x:C.waterHi,b:'#3a2418',r:'#2a8a8a',h:'#4ab0a8',R:'#1a5a5a',y:C.gold,k:'#3a2418'},
+  badBro:{w:'#8a2a5a',W:'#5a1a3a',s:'#d89868',S:'#a86a44',e:OUT,m:C.mouth,x:C.waterHi,b:'#2a1a12',r:'#7a3a2a',h:'#9a5a3a',R:'#4a2418',y:'#3a2418',k:'#2a1a12'},
+  servantL:{w:'#e8b860',W:'#a8642a',s:'#d89868',S:'#a86a44',e:OUT,m:C.mouth,b:'#a8642a',r:'#c8944a',h:'#e8b860',R:'#8a5a2a',y:C.gold,k:'#5a3a22'},
+  servantD:{w:'#3a8a6a',W:'#1e5a44',s:'#e0a074',S:'#b07a50',e:OUT,m:C.mouth,b:'#2a1a12',r:'#2e7a5a',h:'#4aa07a',R:'#1a4a36',y:C.gold,k:'#1a2a20'}
+});
+const LION=["............mmmmm...","...........mmmmmmm..","t.........mmmyyymmm.",".t........mmyyeyymm.","..t.......mmyyyyNmm.","...yyyyyyymmmyyymm..","..yyyyyyyyyymmmmm...","..yyyyyyyyyyyyy.....","..yy.yy....yy.yy....","..yy.yy....yy.yy....","..kk.kk....kk.kk...."];
+const LIONM={m:'#a8642a',y:'#e8b860',e:OUT,N:'#5a3a2a',t:'#c8944a',k:OUT};
+const HORSE=["............mhh...","...........mhhhh..","...........hhhehh.","..........hhh..hh.","..bbbbbbbbbhh.....",".bbbbbbbbbbbh.....","tbbbbbbbbbbbb.....","t.bbbbbbbbbbb.....","..bb.bb...bb.bb...","..bb.bb...bb.bb...","..kk.kk...kk.kk..."];
+const HORSEM={b:'#d8a860',h:'#d8a860',m:'#a8642a',e:OUT,t:'#a8642a',k:'#5a3a22'};
+function bigSpr(rows,x,y,map,s,flip){x=Math.round(x);y=Math.round(y);const wid=Math.max(...rows.map(r=>r.length));const op=(r,c)=>r>=0&&r<rows.length&&c>=0&&c<rows[r].length&&rows[r][c]!=='.'&&map[rows[r][c]];const X=c=>x+(flip?wid-1-c:c)*s;
+  for(let r=0;r<rows.length;r++)for(let c=0;c<rows[r].length;c++){if(!op(r,c))continue;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]])if(!op(r+dy,c+dx))R(X(c+dx),y+(r+dy)*s,s,s,OUT);}
+  for(let r=0;r<rows.length;r++)for(let c=0;c<rows[r].length;c++)if(op(r,c))R(X(c),y+r*s,s,s,map[rows[r][c]]);}
+function lion(x,base,t,o={}){const s=o.s||2;if(s>1)shadow(x+20,base,16);const br=t%16<8?0:1;bigSpr(LION,x,base-LION.length*s-br,LIONM,s,!!o.flip);
+  if(o.roar&&t%10<5){const mx=o.flip?x+2:x+16*s,my=base-6*s-br;R(mx,my,3,2,'#c8323c');for(let i=0;i<3;i++){g.globalAlpha=.4;P(o.flip?mx-4-i*2:mx+5+i*2,my-1-i,'#e8e0d0');g.globalAlpha=1;}}}
+function horse(x,base,t,o={}){shadow(x+18,base,14);const b=o.gallop&&t%4<2?-1:0;bigSpr(HORSE,x,base-HORSE.length*2+b,HORSEM,2,!!o.flip);
+  shapes([['r',o.flip?x+12:x+12,base-15+b,10,3,'#8a1f33']]);R(o.flip?x+13:x+13,base-14+b,8,1,C.gold);
+  if(o.rider)person('goodBro',o.flip?x+12:x+10,base-12+b,{noShadow:true,happy:true,sit:true});}
+function rays(cx,cy,n,r0,r1,c,t){for(let i=0;i<n;i++){const a=i/n*Math.PI*2+t*.02;line(cx+Math.cos(a)*r0,cy+Math.sin(a)*r0,cx+Math.cos(a)*r1,cy+Math.sin(a)*r1,c);}}
+function butterflies(t,n,x0,y0,w,h){for(let i=0;i<n;i++){const k=t*.08+i*2.3,x=x0+(Math.sin(k)*.5+.5)*w,y=y0+(Math.cos(k*1.4)*.5+.5)*h,up=(t+i)%4<2,c=[C.yellow,C.pink,C.tealHi][i%3];P(x,y,OUT);P(x-1,y-(up?1:0),c);P(x+1,y-(up?1:0),c);if(up){P(x-1,y-1,c);P(x+1,y-1,c);}}}
+function heartP(x,y,t,c=C.pink){spr([".pp.pp.","ppppppp",".ppppp.","..ppp..","...p..."],x,y-(t%8<4?1:0),{p:c},OUT);}
+function flowerBed(x,base,w,seed){const q=rng(seed);for(let i=0;i<w;i+=3){const h=2+q()*4|0,c=[C.pink,C.yellow,C.red,C.white,'#8a5ac8',C.orange][q()*6|0];line(x+i,base,x+i,base-h,C.greenDk);P(x+i,base-h-1,c);P(x+i-1,base-h,c);P(x+i+1,base-h,c);P(x+i,base-h,C.yellow);}}
+
+/* fruit samples: the one fig tree carries every orchard's fruit */
+const FRUITS=['fig','walnut','pomegranate','apple','grape','pear','orange','cherry','quince','plum'];
+function fruitIcon(kind,x,y){x=Math.round(x);y=Math.round(y);
+  if(kind==='fig'){shapes([['e',x,y+1,2,2,'#6a3a7a']]);P(x,y-2,'#6a3a7a');P(x-1,y,'#9a6aa8');}
+  else if(kind==='walnut'){shapes([['e',x,y,2,2,'#a8845a']]);line(x,y-2,x,y+2,'#7a5a3a');P(x-1,y-1,'#c8a478');}
+  else if(kind==='pomegranate'){shapes([['e',x,y,2,2,'#c8283a']]);P(x-1,y-3,'#e8b048');P(x+1,y-3,'#e8b048');P(x-1,y-1,'#ff8a8a');}
+  else if(kind==='apple'){shapes([['e',x,y,2,2,'#e83a3a']]);P(x,y-3,C.woodDk);P(x+1,y-3,C.leaf);P(x-1,y-1,'#ffaaaa');}
+  else if(kind==='grape'){[[0,0],[2,0],[1,1],[-1,1],[1,-1],[0,2],[2,2]].forEach(([dx,dy])=>{R(x+dx-1,y+dy-1,2,2,'#6a2a8a');});P(x-1,y-1,'#b07ad0');line(x,y-3,x+1,y-2,C.woodDk);}
+  else if(kind==='pear'){shapes([['e',x,y+1,2,2,'#e8d050']]);R(x-1,y-2,2,2,'#e8d050');P(x,y-3,C.woodDk);}
+  else if(kind==='orange'){shapes([['e',x,y,2,2,'#ff8c2e']]);P(x-1,y-1,'#ffc080');P(x,y-3,C.leaf);}
+  else if(kind==='cherry'){line(x,y-3,x-2,y,C.woodDk);line(x,y-3,x+2,y,C.woodDk);R(x-3,y,2,2,'#d8202a');R(x+1,y,2,2,'#d8202a');}
+  else if(kind==='quince'){shapes([['e',x,y,2,2,'#f0d860']]);P(x+1,y-2,'#c8b040');P(x-1,y-1,'#fff4a0');}
+  else if(kind==='plum'){shapes([['e',x,y,2,2,'#3a3aa8']]);P(x-1,y-1,'#8a8ae0');}}
+function figTree(x0,y0,t,o={}){
+  // trunk grows out of the well wall at (x0,y0), canopy up and to the right
+  for(let i=0;i<3;i++)line(x0,y0+2+i,x0+14,y0-6+i,i===0?C.woodHi:C.wood);R(x0+6,y0-6,20,2,C.woodDk);R(x0+6,y0-7,20,1,C.woodHi);line(x0+22,y0-6,x0+26,y0-12,C.wood);
+  const cx=x0+26,cy=y0-16;shapes([['e',cx,cy,17,9,C.greenDk]]);ell(cx-2,cy-1,15,7,C.green);ell(cx-4,cy-3,10,5,C.leaf);ell(cx-6,cy-5,5,2,C.greenHi);
+  for(let i=0;i<7;i++){const a=i/7*Math.PI*2;shapes([['e',cx+Math.cos(a)*15,cy+Math.sin(a)*7,3,2,i%2?C.leaf:C.green]],null);}
+  const spots=[[-12,-3],[-6,2],[0,-5],[6,1],[12,-2],[-9,-7],[3,4],[9,-6],[-2,1],[14,3]];
+  spots.forEach(([dx,dy],i)=>{fruitIcon(FRUITS[i],cx+dx,cy+dy);if(o.glow&&(t+i*5)%14<2)P(cx+dx-1,cy+dy-2,C.white);});
+  if(o.glow)light(cx,cy,20,C.goldHi,.08+.03*Math.sin(t*.4));
+  if(o.poison)for(let i=0;i<3;i++){const a=(t*.7+i*8)%18;g.globalAlpha=.5*(1-a/18);ell(cx-10+i*10,cy+6-a,2,1,'#8aff6a');g.globalAlpha=1;}}
+
+/* the well, seen as a cut-away: lion on the rim, roots and mice, insects on the walls, dragon below */
+const MOUSE=["..pp...","ewwwww.","wwwwwwwt","wwwwww..",".k..k..."];
+function mouse(x,y,c,t,flip){const nib=t%6<3?0:1;spr(MOUSE,x+(flip?-nib:nib),y,{p:'#ff9ab0',e:c==='#2a2a32'?'#ff4a4a':OUT,w:c,t:'#ff9ab0',k:'#ff9ab0'},OUT,flip);
+  if(t%6<2){P(x+(flip?-2:8),y+3,C.dirtHi);P(x+(flip?-3:9),y+1,C.dirtHi);}}
+const BUGS=[["s.s.s","sssss","s.s.s"],[".x.x.","xxxxx","x.x.x",".x.x."],["c.c","ccc",".c."]];
+function bug(i,x,y,t){const k=i%3,map={s:'#141010',x:'#e84a2a',c:'#e8c040'};spr(BUGS[k],x,y+((t+i*3)%8<4?0:1),map,null);P(x+2,y-1,map[['s','x','c'][k]]);}
+function dragonMaw(t,o={}){
+  const cx=80,cy=80,open=o.big?11:9+Math.round(Math.sin(t*.15));
+  shapes([['e',cx,cy+8,34,14,'#1e4a3a']]);ell(cx,cy+6,32,12,'#2a6a4a');for(let i=0;i<18;i++){const a=Math.PI+i/17*Math.PI;P(cx+Math.cos(a)*28,cy+6+Math.sin(a)*9,'#3a8a5a');P(cx+Math.cos(a)*24,cy+7+Math.sin(a)*7,'#1e4a3a');}
+  ell(cx,cy,24,open,'#3a0a10');ell(cx,cy+1,20,open-2,'#5a1018');ell(cx,cy+3,14,Math.max(1,open-5),'#1a0206');
+  for(let i=0;i<14;i++){const a=i/14*Math.PI*2,tx=cx+Math.cos(a)*23,ty=cy+Math.sin(a)*(open-.5),ix=cx+Math.cos(a)*19,iy=cy+Math.sin(a)*(open-3);line(tx,ty,ix,iy,'#f4f1e6');P(tx,ty,'#c8c0b0');}
+  [[cx-30,cy-2],[cx+30,cy-2]].forEach(([ex,ey],i)=>{ell(ex,ey,4,3,'#1e4a3a');ell(ex,ey,3,2,o.big?'#ff4a2a':'#ffd23f');R(ex,ey-2,1,4,OUT);light(ex,ey,6,o.big?'#ff4a2a':'#ffd23f',.12);});
+  for(let i=0;i<2;i++){const a=(t*.6+i*9)%16;g.globalAlpha=.35*(1-a/16);ell(cx-8+i*16,cy-6-a,2,1,'#a8b0a0');g.globalAlpha=1;}}
+function wellBg(dark,lit){
+  grad(0,8,dark?['#2a1428','#5a2a3a']:['#3a2a5a','#c8604a']);R(0,7,W,4,'#c8a068');for(let x=0;x<W;x+=3)P(x,7,'#e8c890');
+  for(let y=11;y<H;y++)for(let x=0;x<W;x++){if(x>=52&&x<108)continue;const band=Math.floor((y+Math.sin(x*.2)*2)/7)%4,c=['#5a3e28','#4a3220','#6a4a30','#3e2a1a'][band];if((x+y*3)%11===0)P(x,y,'#7a5a3a');else P(x,y,c);}
+  for(let i=0;i<30;i++){const r=rng(i+11),x=r()<.5?r()*48:110+r()*48,y=14+r()*72;shapes([['e',x,y,2,1,'#6a6050']],null);P(x-1,y-1,'#8a8070');}
+  for(let y=11;y<H;y++){const k=(y-11)/(H-11);for(let x=52;x<108;x++){const c=k<.3?'#2a1e1a':k<.6?'#1e1612':'#120c0a';P(x,y,(x+y)%5===0&&k<.6?'#3a2a22':c);}}
+  for(let y=11;y<H;y+=4){R(50,y,3,3,'#7a6a5a');R(107,y+2,3,3,'#7a6a5a');P(50,y,'#9a8a7a');P(107,y+2,'#9a8a7a');}
+  line(50,37,30,30,C.woodDk);line(50,38,30,31,C.wood);line(50,40,26,46,C.woodDk);line(50,41,26,47,C.wood);line(38,34,34,38,C.woodDk);
+  if(lit){g.globalAlpha=.5;R(108,26,2,30,C.goldHi);g.globalAlpha=1;light(110,40,16,C.goldHi,.1);}
+  if(dark)shade(.25,'#1a0008');}
+function wellFx(t,m){
+  const bad=m.startsWith('left'),end=m==='leftend'||m==='midend';
+  lion(72,10,t,{s:1,roar:end&&t%20<5});
+  figTree(52,36,t,{glow:m==='fruit'||m==='niyaz',poison:m==='gulp'||m==='lefteat'});
+  mouse(36,28,'#f4f1e6',t,false);mouse(32,40,'#2a2a32',t+3,false);
+  [[46,20],[44,56],[47,70],[110,18],[112,48],[109,66],[113,80]].forEach(([x,y],i)=>bug(i,x,y,t));
+  dragonMaw(t,{big:end});
+  const shake=end&&t%2?1:0;
+  const who=bad?'badBro':'goodBro',x=60+shake;
+  person(who,x,51,{up:true,noShadow:true,sad:m!=='niyaz'&&m!=='fruit'&&m!=='think'&&m!=='love',tears:bad||m==='chance'||end,happy:m==='niyaz'||m==='fruit'});
+  if(m==='think'||m==='love'){bubble(74,26,t,m==='think'?'!':'?');
+    g.globalAlpha=.6;for(let k=0;k<24;k++){const f=((k+t*.3)%24)/24;P(110-f*70,10+f*70,C.goldHi);P(36+f*44,30+f*48,C.goldHi);}g.globalAlpha=1;}
+  if(m==='love')heartP(84,34,t,C.goldHi);
+  if(m==='chance')bubble(74,26,t,'?');
+  if(m==='leftheart'){heartP(70,40,t,'#ff6a8a');if(t%8<4){P(72,47,C.waterHi);P(76,47,C.waterHi);}}
+  if(m==='gulp'||m==='lefteat'){fruitIcon('fig',x+5,33);fruitIcon('apple',x+9,35);}
+  if(m==='climb'){for(let i=0;i<3;i++)P(x+2+i*3,30-((t+i)%4),C.white);}
+  if(end)shade(m==='leftend'?.22:.14,m==='leftend'?'#3a0008':'#000010');}
+
+/* the fork in the road */
+function forkBg(){grad(0,50,SKY.day);sun(132,12,6,false);mountains(9,44,'#7a9ac8','#6a88b8',C.white);hillsBand(3,52,6,'#5a9a4a','#7ab86a');
+  R(0,52,W,H,C.grass);for(let i=0;i<90;i++){const r=rng(i+5);P(r()*W|0,53+r()*37|0,i%3?C.grassHi:C.grassDk);}
+  for(let y=52;y<H;y++){const k=(y-52)/(H-52),xl=84+k*6,xr=92+k*60;R(xl,y,xr-xl,1,C.pave);P(xl,y,C.paveDk);P(xr,y,C.paveDk);if(y%3===0)for(let x=xl+3;x<xr-2;x+=6)P(x+(y%6?3:0),y,C.paveDk);}
+  for(let i=0;i<5;i++){const k=i/4,x=96+k*62,y=55+k*30;shapes([['r',x,y-3,2,3,C.stoneHi]]);}
+  [[104,58,10],[124,64,13],[148,72,16]].forEach(([x,b,h])=>cypress(x,b,h));guardPost(128,54);
+  for(let y=52;y<H;y++){const k=(y-52)/(H-52),xr=76-k*6,xl=70-k*62;for(let x=xl;x<xr;x++){if((x*7+y*3)%9<7)P(x,y,(x+y)%4?C.dirt:C.dirtDk);}}
+  [[20,80],[44,70],[8,64],[56,60]].forEach(([x,y])=>{shapes([['e',x,y,3,2,'#8a8070']]);P(x-1,y-1,'#aaa090');});thorns(4,74,14);thorns(30,62,10);bareTree(14,58,14);
+  for(let i=0;i<4;i++){line(30+i*6,60-i,33+i*6,52-i,C.woodDk);}line(28,55,52,51,C.woodDk);
+  shapes([['r',79,40,2,22,C.woodDk]]);shapes([['r',82,40,16,5,C.woodHi]]);P(97,42,C.woodHi);R(83,42,10,1,C.woodDk);shapes([['r',62,46,16,5,'#8a6a4a']]);P(61,48,'#8a6a4a');R(64,48,10,1,'#4a3a2a');}
+function forkFx(t,m){clouds(t,[[20,10,10],[110,6,8]],false);birds(t,2,10);g.globalAlpha=.35;ell(30,18,16,5,'#4a4e58');g.globalAlpha=1;
+  if(m==='start'){person('guide',74,74,{beard:true,point:t%30<15});person('goodBro',94,80,{flip:true});person('badBro',50,82,{});}}
+
+/* the two roads */
+function roadBg(m){if(m==='left'){grad(0,74,SKY.grey);mountains(5,40,'#5a5e68','#4a4e58',null);
+    for(let x=0;x<W;x++){const h=Math.round(16+10*Math.sin(x*.07)+5*Math.sin(x*.21));R(x,74-h,1,h+20,'#5a6a3a');P(x,74-h,'#7a8a52');}
+    for(let x=0;x<W;x++){const y=74-Math.round(16+10*Math.sin(x*.07)+5*Math.sin(x*.21))+2;P(x,y,C.dirtDk);P(x,y+1,C.dirt);}
+    R(0,78,W,H,'#3a6ab0');for(let x=0;x<W;x+=4)P(x+(x%8?1:0),79,'#8ec0f0');R(0,86,W,H,'#4a5a3a');
+    [[30,76],[90,76],[130,77]].forEach(([x,y])=>{shapes([['e',x,y,4,2,'#8a8070']]);P(x-1,y-1,'#aaa090');});thorns(110,60,18);bareTree(140,52,18);}
+  else{grad(0,50,SKY.day);sun(130,12,7,false);hillsBand(1,50,5,'#6ab05a','#8ad07a');R(0,50,W,H,C.grass);for(let i=0;i<70;i++){const r=rng(i+9);P(r()*W|0,51+r()*39|0,i%3?C.grassHi:C.grassDk);}
+    road(80,50,30,130,C.pave,C.paveDk,'#e8e0c8');for(let i=0;i<6;i++){const k=i/5,y=52+k*36;shapes([['r',80-(50*k)-6,y-2,2,3,C.stoneHi],['r',80+(50*k)+4,y-2,2,3,C.stoneHi]]);}
+    [[20,64,14],[40,58,11],[120,58,11],[142,66,15]].forEach(([x,b,h])=>cypress(x,b,h));flowerBed(4,86,26,3);flowerBed(130,86,28,8);guardPost(54,52);}}
+function roadFx(t,m){const step=Math.floor(t/3)%3;
+  if(m==='left'){clouds(t,[[20,12,12],[90,8,10],[140,16,9]],true);const x=40+((t*.4)%60),y=74-Math.round(16+10*Math.sin(x*.07)+5*Math.sin(x*.21));person('badBro',x-6,y,{walk:step,sad:true});}
+  else{clouds(t,[[20,10,10],[100,6,8]],false);birds(t,3,10);butterflies(t,2,10,60,40,20);person('goodBro',74,82,{walk:step,happy:true});
+    shapes([['r',88,50,16,9,C.white]]);R(90,58,2,2,C.white);P(89,60,C.white);heartP(90,52,t,C.pink);notesSmall(t,98,54);}}
+function notesSmall(t,x,y){const c=(t%10<5)?C.tealHi:C.yellow;R(x,y,2,2,c);R(x+1,y-3,1,3,c);P(x+2,y-3,c);}
+
+/* the half-tended garden */
+function gardenBg(){grad(0,46,SKY.day);sun(140,10,6,false);R(0,46,W,H,C.grass);for(let i=0;i<80;i++){const r=rng(i+7);P(r()*W|0,47+r()*43|0,i%3?C.grassHi:C.grassDk);}
+  for(let x=0;x<W;x+=6){R(x,40,1,8,C.woodDk);}R(0,42,W,1,C.woodDk);R(0,45,W,1,C.woodDk);
+  [[16,58,7,C.red],[40,54,6,C.orange],[66,58,7,'#ff8fb0']].forEach(([x,b,r,f])=>{tree(x,b,r);const q=rng(x);for(let i=0;i<5;i++)P(x-r+2+q()*(r*2-4),b-r*2-6+q()*r,f);});
+  flowerBed(4,72,40,4);flowerBed(10,82,50,9);flowerBed(50,76,30,13);
+  R(96,46,64,44,'#6a7a3a');for(let i=0;i<120;i++){const r=rng(i+33);P(96+r()*64|0,46+r()*44|0,i%3?'#5a6a2e':'#7a6a3a');}
+  [[108,70],[132,62],[148,80]].forEach(([x,y],i)=>{shapes([['e',x,y,7,4,'#5a4a2a']]);ell(x-2,y-2,4,2,'#6a5a34');R(x-1,y-1,2,1,'#3a2a14');P(x+3,y-1,'#8a7a5a');if(i!==1){R(x+4,y-3,3,2,'#8a4a2a');P(x+5,y-4,'#a85a3a');}});
+  for(let i=0;i<8;i++){const r=rng(i+50),x=98+r()*60,y=50+r()*30;line(x,y+4,x+(r()<.5?-2:2),y,'#4a5a1e');P(x,y,'#8a8a2a');}
+  shapes([['r',118,78,8,6,'#8a5a3a']]);line(118,78,126,84,'#5a3a2a');shapes([['r',140,52,6,4,'#a86a3a']]);}
+function gardenFx(t,m){butterflies(t,3,10,50,70,26);birds(t,2,10);
+  for(let i=0;i<8;i++){const a=t*.4+i*1.7,x=124+Math.sin(a)*18+Math.cos(a*1.3)*6,y=66+Math.cos(a*1.1)*10;P(x,y,OUT);if((t+i)%3===0)P(x+1,y-1,'#9a9a9a');}
+  if(m==='good'){person('goodBro',38,84,{sit:true,happy:true,noShadow:true});fruitIcon('apple',53,74);}
+  else if(m==='bad'||m==='leftbad'){const who=m==='bad'?'goodBro':'badBro';person(who,100,84,{sad:true});
+    g.globalAlpha=.6;for(let i=0;i<3;i++){const a=(t*.5+i*6)%14;P(106+i*2,62-a,'#8aff6a');}g.globalAlpha=1;}
+  else{person('goodBro',60,84,{});}}
+
+/* the great desert with the oak thicket and the well */
+function desertBg(){grad(0,58,['#f2b860','#f6cf86','#fae2b0','#fdf0d0']);sun(118,14,9,true);
+  for(let x=0;x<W;x++){const h=Math.round(8+5*Math.sin(x*.04+1)+3*Math.sin(x*.11));R(x,58-h,1,h,'#e8b870');P(x,58-h,'#f6d090');}
+  R(0,58,W,H,'#e8c080');for(let y=60;y<H;y+=4)for(let x=(y%8)*2;x<W;x+=14)R(x,y,6,1,'#d8a868');
+  for(let i=0;i<9;i++){const r=rng(i+2),x=r()*40,y=46+r()*12;shapes([['e',x,y,6,4,'#3a5a2a']]);ell(x-1,y-1,4,2,'#4a7a3a');}
+  shapes([['e',140,72,10,3,'#8a8070']]);ell(140,71,8,2,'#2a1e1a');R(131,72,18,2,'#8a8070');for(let x=132;x<149;x+=3)P(x,72,'#aaa090');}
+function desertFx(t,m){g.globalAlpha=.25;for(let i=0;i<3;i++){const x=((t*.8+i*60)%(W+40))-20;ell(x,64+i*6,16,2,'#fff4d8');}g.globalAlpha=1;
+  const runX=92+((t*.6)%28),who=m==='left'?'badBro':'goodBro';
+  lion(6+((t*.5)%24),86,t,{roar:t%12<6});
+  person(who,runX,86,{walk:Math.floor(t/2)%3,sad:m!=='calm',tears:m==='left'||m==='panic',flip:false});
+  g.globalAlpha=.5;for(let i=0;i<4;i++){const a=(t+i*3)%10;P(runX-2-a,84-(a%3),'#d8b880');}g.globalAlpha=1;
+  if(m==='calm')bubble(runX+10,58,t,'?');if(m==='panic'||m==='left'){P(runX+3,64,C.waterHi);P(runX+9,63,C.waterHi);}}
+
+/* the door that opens in the well wall into the garden */
+function doorBg(m){
+  if(m==='best'){grad(0,56,['#5aa0e8','#8ac8f8','#d8f0ff','#fff8e0']);sun(24,12,7,false);mountains(4,44,'#9ab8d8','#8aa8c8',C.white);
+    R(0,56,W,H,'#6ac070');for(let i=0;i<90;i++){const r=rng(i+19);P(r()*W|0,57+r()*33|0,i%3?'#7ad07a':'#3a9048');}
+    ell(80,74,16,4,'#2a5aa8');ell(80,73,14,3,'#5a9ae0');P(74,72,C.white);P(86,73,C.white);[[16,62,8],[44,58,6],[118,58,7],[146,64,9]].forEach(([x,b,r],i)=>{tree(x,b,r);const q=rng(x);for(let k=0;k<6;k++)fruitIcon(FRUITS[(i*3+k)%FRUITS.length],x-r+2+q()*(r*2-4),b-r*2-6+q()*r);});
+    flowerBed(2,88,60,21);flowerBed(98,88,60,22);return;}
+  R(0,0,W,H,'#2a1e14');for(let y=0;y<H;y++)for(let x=0;x<W;x++){const band=Math.floor((y+Math.sin(x*.2)*2)/7)%4;if((x+y)%3===0)P(x,y,['#4a3220','#3e2a1a','#5a3e28','#3a2616'][band]);}
+  const ax=80,ay=74;R(ax-30,ay-50,60,50,'#1a1206');ell(ax,ay-50,30,16,'#1a1206');
+  g.save();g.beginPath();g.rect(ax-28,ay-50,56,50);g.ellipse(ax,ay-50,28,15,0,Math.PI,2*Math.PI);g.clip();grad(ay-66,ay-20,['#5aa0e8','#8ac8f8','#d8f0ff','#fff8e0']);R(ax-28,ay-26,56,26,'#6ac070');
+  for(let i=0;i<30;i++){const r=rng(i+7);P(ax-28+r()*56,ay-24+r()*22,i%2?'#7ad07a':'#3a9048');}
+  [[ax-16,ay-22,6],[ax+14,ay-24,5]].forEach(([x,b,r],i)=>{tree(x,b,r);fruitIcon(FRUITS[i*2],x-2,b-r*2-4);fruitIcon(FRUITS[i*2+3],x+3,b-r*2-2);});flowerBed(ax-26,ay-1,52,31);g.restore();
+  for(let a=Math.PI;a<=2*Math.PI;a+=.02){P(ax+Math.cos(a)*30,ay-50+Math.sin(a)*17,C.gold);P(ax+Math.cos(a)*31,ay-50+Math.sin(a)*18,C.goldDk);}
+  R(ax-31,ay-50,2,50,C.gold);R(ax+29,ay-50,2,50,C.gold);R(ax-32,ay-50,1,50,C.goldDk);R(ax+31,ay-50,1,50,C.goldDk);
+  for(let k=0;k<6;k++){P(ax-30,ay-46+k*8,C.goldHi);P(ax+30,ay-46+k*8,C.goldHi);}
+  for(let i=0;i<6;i++){line(ax-34-i*3,ay-60+i*9,ax-40-i*4,ay-56+i*10,'#120c08');line(ax+34+i*3,ay-60+i*9,ax+40+i*4,ay-56+i*10,'#120c08');}
+  R(0,ay,W,H,'#3a2a1a');for(let x=0;x<W;x+=5)P(x,ay+1,'#5a4a3a');}
+function doorFx(t,m){
+  if(m==='best'){butterflies(t,4,10,30,140,24);birds(t,3,8);light(78,52,24,C.white,.05);for(let i=0;i<4;i++){const a=(t*.8+i*4)%10;P(80+(i-1.5)*2,70-a,a<5?C.white:'#8ec0f0');}
+    person('servantL',22,86,{beard:true,happy:true});person('servantD',122,86,{mustache:true,happy:true,flip:true});horse(52+((t*.3)%30),88,t,{gallop:true,rider:true});return;}
+  light(80,46,34,C.goldHi,.1+.03*Math.sin(t*.3));rays(80,40,14,30,40,'#fff4c0',t);butterflies(t,2,56,20,44,20);
+  horse(2,88,t,{});person('servantL',40,88,{beard:true,happy:true,point:true});person('servantD',132,88,{mustache:true,happy:true,flip:true,point:true});
+  person('goodBro',64,88,{happy:true,up:t%20<10});}
+
+/* meaning: small symbolic pictures, no people stand for anything sacred */
+function meaningBg(){R(0,0,W,H,'#1a1630');for(let y=0;y<H;y+=6)for(let x=((y/6)%2)*6;x<W;x+=12)P(x,y,'#26203e');R(6,6,W-12,H-12,'#221c3a');R(6,6,W-12,1,'#3a3466');R(6,H-7,W-12,1,'#3a3466');R(6,6,1,H-12,'#3a3466');R(W-7,6,1,H-12,'#3a3466');}
+function meaningFx(t,m){
+  if(m==='compare'){R(8,8,71,74,'#120c14');R(81,8,71,74,'#bfe4f8');R(81,60,71,22,'#6ac070');R(79,8,2,74,C.gold);
+    ell(44,76,18,5,'#3a0a10');for(let i=0;i<10;i++){const a=i/10*Math.PI*2;P(44+Math.cos(a)*17,76+Math.sin(a)*4,C.white);}person('badBro',38,70,{sad:true,tears:true});
+    tree(100,62,7);tree(124,60,6);flowerBed(86,80,62,5);person('goodBro',134,80,{happy:true});butterflies(t,2,86,20,60,30);}
+  else if(m==='brothers'){
+    // left: the believer's heart over the straight, ordered road; right: the dark heart over a broken, thorny track
+    light(46,24,16,C.goldHi,.12+.04*Math.sin(t*.3));spr([".pp.pp.","ppppppp","ppppppp",".ppppp.","..ppp..","...p..."],43,19,{p:C.red},OUT);
+    spr([".pp.pp.","ppppppp","ppppppp",".ppppp.","..ppp..","...p..."],111,19,{p:'#4a3040'},OUT);
+    for(let y=34;y<80;y++){const w=4+(y-34)*.35;R(46-w,y,w*2,1,C.pave);P(46-w,y,C.paveDk);P(46+w,y,C.paveDk);if(y%6<3)P(46,y,'#e8e0c8');}
+    for(let y=36;y<80;y+=7){P(46-6-(y-34)*.35,y,C.stoneHi);P(46+6+(y-34)*.35,y,C.stoneHi);}cypress(22,74,12);cypress(70,74,12);
+    for(let y=34;y<80;y++){const cx=114+Math.round(Math.sin(y*.25)*8),w=2+(y-34)*.15;for(let x=cx-w;x<cx+w;x++)if((x*7+y*3)%9<6)P(x,y,C.dirtDk);}
+    thorns(90,70,14);thorns(126,58,12);bareTree(138,76,16);g.globalAlpha=.4;ell(114,14,22,5,'#4a4e58');g.globalAlpha=1;}
+  else if(m==='well'){
+    // the desert above, the well below; sun and moon take turns (day and night) while two mice gnaw; an hourglass and 60
+    grad(10,40,['#f2b860','#fae2b0']);R(10,40,140,4,'#e8c080');R(60,44,40,36,'#120c0a');R(58,44,2,36,'#7a6a5a');R(100,44,2,36,'#7a6a5a');
+    const day=Math.floor(t/20)%2;if(day)sun(80,24,6,false);else moon(80,24,5);
+    line(60,60,90,52,C.wood);line(60,61,90,53,C.woodDk);mouse(64,54,'#f4f1e6',t,false);mouse(84,48,'#2a2a32',t+3,true);
+    shapes([['r',22,52,14,2,C.woodHi],['r',22,76,14,2,C.woodHi]]);for(let i=0;i<10;i++){const w=Math.max(1,6-Math.abs(i-5));R(29-w,54+i*2,w*2,2,'#bfe4f8');}
+    const fall=(t%20)/20;for(let i=0;i<4;i++)R(29-Math.round(4-i),65+i*2+Math.round(fall),Math.max(1,(4-i)*2),1,'#e8c080');P(29,62+((t%6)),'#e8c080');
+    const D={'6':['###','#..','###','#.#','###'],'0':['###','#.#','#.#','#.#','###']};
+    ['6','0'].forEach((d,i)=>D[d].forEach((row,y)=>row.split('').forEach((v,x)=>{if(v==='#')R(116+i*10+x*2,56+y*2,2,2,C.gold);})));}
+  else if(m==='bugs'){
+    // the maw that is a door for the believer, and insects that ring like little wake-up bells
+    ell(34,30,14,6,'#3a0a10');for(let i=0;i<12;i++){const a=i/12*Math.PI*2;P(34+Math.cos(a)*13,30+Math.sin(a)*5,C.white);}
+    for(let k=0;k<5;k++)P(54+k*3,30,C.goldHi);P(68,29,C.goldHi);P(68,31,C.goldHi);
+    R(80,16,22,26,'#bfe4f8');ell(91,16,11,6,'#bfe4f8');R(80,34,22,8,'#6ac070');for(let a=Math.PI;a<=2*Math.PI;a+=.04)P(91+Math.cos(a)*12,16+Math.sin(a)*7,C.gold);R(79,16,1,26,C.gold);R(102,16,1,26,C.gold);
+    for(let i=0;i<4;i++){const x=20+i*36,y=64;bug(i,x,y,t);const ring=(t+i*5)%12<5;const bx=x+12,by=y-6+(ring?-1:0);
+      shapes([['e',bx,by,3,3,C.gold]]);R(bx-4,by+2,9,1,C.gold);P(bx,by-4,C.goldDk);P(bx,by+4,C.goldHi);if(ring){P(bx-5,by-3,C.goldHi);P(bx+5,by-3,C.goldHi);}}}
+  else if(m==='fruits'){
+    // one tree of samples on the left, the orchard they stand for on the right
+    figTree(14,66,t,{glow:true});for(let k=0;k<6;k++)P(70+k*3,46,C.goldHi);P(87,45,C.goldHi);P(87,47,C.goldHi);
+    R(92,14,58,62,'#bfe4f8');R(92,52,58,24,'#6ac070');R(92,14,58,1,C.gold);R(92,75,58,1,C.gold);R(92,14,1,62,C.gold);R(149,14,1,62,C.gold);
+    [[102,54,6],[121,52,7],[140,54,6]].forEach(([x,b,r],i)=>{tree(x,b,r);for(let k=0;k<4;k++)fruitIcon(FRUITS[(i*3+k)%FRUITS.length],x-r+3+k*3,b-r*2-4+(k%2)*3);});
+    light(121,40,26,C.white,.05);butterflies(t,2,96,20,50,30);}
+  else if(m==='key'){const y=44+Math.round(Math.sin(t*.2)*2);light(80,y,30,C.goldHi,.12+.04*Math.sin(t*.3));rays(80,y,16,16,26,'#fff4c0',t);
+    ell(66,y,8,8,C.gold);ell(66,y,4,4,'#221c3a');R(74,y-1,24,3,C.gold);R(90,y+2,3,5,C.gold);R(95,y+2,3,4,C.gold);R(74,y-1,24,1,C.goldHi);}
+  else if(m==='door'){R(30,20,40,56,'#120c0a');ell(50,20,20,10,'#120c0a');for(let i=0;i<10;i++){const a=i/10*Math.PI*2;P(50+Math.cos(a)*15,52+Math.sin(a)*6,C.white);}
+    const ph=(t%60)/60;g.globalAlpha=Math.min(1,ph*2);R(92,20,40,56,'#bfe4f8');ell(112,20,20,10,'#bfe4f8');R(92,58,40,18,'#6ac070');tree(104,64,5);for(let a=Math.PI;a<=2*Math.PI;a+=.03)P(112+Math.cos(a)*21,20+Math.sin(a)*11,C.gold);g.globalAlpha=1;
+    for(let k=0;k<4;k++)P(76+k*3,48,C.goldHi);P(86,47,C.goldHi);P(86,49,C.goldHi);}
+  else if(m==='sum'){R(14,18,132,58,'#3a2a2a');R(14,18,132,2,'#5a3a2a');shapes([['r',60,26,40,30,'#bfe4f8']]);R(60,46,40,10,'#6ac070');R(79,26,2,30,'#5a3a2a');R(60,40,40,2,'#5a3a2a');light(80,40,26,C.white,.08);
+    shapes([['r',24,62,40,4,C.woodHi],['r',96,62,40,4,C.woodHi]]);person('goodBro',36,62,{sit:true,happy:true,noShadow:true});person('folkB',108,62,{sit:true,happy:true,noShadow:true,beard:true});}}
+
+/* the last page: quiet night sky, no sound */
+function duaBg(){grad(0,H,SKY.night);milkyWay(.3,6);starsBg(80,null);for(let x=0;x<W;x++){const h=Math.round(10+4*Math.sin(x*.05)+2*Math.sin(x*.17));R(x,H-h,1,h,'#0e1a14');}}
+function duaFx(t){starsFx(t,80,null);}
+
+const SCENES={
+  fork:{bg:forkBg,fx:forkFx},
+  road:{bg:roadBg,fx:roadFx},
+  garden:{bg:gardenBg,fx:gardenFx},
+  desert:{bg:desertBg,fx:desertFx},
+  well:{bg(m){wellBg(m==='leftend'||m==='midend'||m==='chance',m==='niyaz')},fx:wellFx},
+  door:{bg:doorBg,fx:doorFx},
+  meaning:{bg:meaningBg,fx:meaningFx},
+  dua:{bg:duaBg,fx:duaFx}
+};
+
+/* HUD: the tree of life, two roots shrinking a little with every step as day and night gnaw them */
+function lifeTree(steps,t){if(steps==null)return;const x0=W-46,y0=3,len=Math.max(2,26-steps*2);shapes([['r',x0,y0,43,11,'#1a1426']]);
+  R(x0+34,y0+2,4,7,C.wood);R(x0+34,y0+2,1,7,C.woodHi);ell(x0+38,y0+2,3,2,C.green);
+  R(x0+34-len,y0+3,len,1,C.woodDk);R(x0+34-len,y0+7,len,1,C.woodDk);
+  const n=t%6<3?0:1;R(x0+31-len-n,y0+1,3,2,'#f4f1e6');P(x0+30-len-n,y0+1,'#ff9ab0');R(x0+31-len-n,y0+5,3,2,'#5a5a66');P(x0+30-len-n,y0+5,'#ff4a4a');}
+
+/* ---------- vignette ---------- */
+const vig=document.createElement('canvas');vig.width=W;vig.height=H;
+g=vig.getContext('2d');
+for(let y=0;y<H;y++)for(let x=0;x<W;x++){const dx=(x-W/2)/(W/2),dy=(y-H/2)/(H/2),v=(dx*dx*.8+dy*dy*1.1-.9)/.7;if(v>th(x,y))P(x,y,'#060410');}
+g=main;
+
+
+/* ---------- story ---------- */
+const STORY={
+  start:{scene:'fork',mode:'start',place:'Yol ayrımı',
+    text:"Eski zamanda iki kardeş uzun bir yolculuğa birlikte çıktı. Gide gide yol ikiye ayrıldı. Yol başında ciddi bir adam gördüler ve sordular: \"Hangi yol iyidir?\" Adam dedi ki: \"Sağ yolda kanuna ve düzene uymak zorunluluğu var; ama o zahmetin içinde bir güven ve mutluluk var. Sol yolda serbestlik ve başıboşluk var; ama o serbestliğin içinde bir tehlike ve mutsuzluk var. Seçim sizin.\"",
+    c:[["\"Tevekkeltü alallah\" de, sağ yoldan git","r_road"],["Serbest olmak için sol yolu seç","l_road"]]},
+
+  r_road:{scene:'road',mode:'right',place:'Sağ yol',
+    text:"Güzel huylu kardeş \"Tevekkeltü alallah\" (yani: Allah'a dayandım) deyip sağ yola girdi ve düzene uymayı kabul etti. Güzel ahlaklı olduğu için güzel şeyler düşünüyor, güzel hayaller kuruyor, kendi kendine dostluk ediyor. Düzeni bildiği ve uyduğu için işleri kolaylaşıyor; güven içinde, rahatça yürüyor.",
+    c:[["Yola devam et","r_garden"],["Güzel şeyler düşünerek yürü","r_garden"]]},
+  r_garden:{scene:'garden',mode:'enter',place:'Bir bahçe',
+    text:"Derken bir bahçeye rastladı. İçinde güzel çiçekler ve meyveler var; ama bakılmadığı için pis şeyler de var. Kardeşi de böyle bir bahçeye girmişti.",
+    c:[["\"Her şeyin iyisine bak\"","r_garden_good"],["Pis köşelere takıl","r_garden_bad"]]},
+  r_garden_bad:{scene:'garden',mode:'bad',place:'Bakımsız köşe',
+    text:"Pis şeylere dikkat edip onlarla uğraştın; miden bulandı, dinlenemedin. Kardeşin de böyle yapmış, hiç dinlenmeden çıkıp gitmişti. Oysa güzel huylu kardeşin kuralı başkadır: \"Her şeyin iyisine bak.\"",
+    c:[["Pisliği bırak, iyisine bak","r_garden_good"],["Bulantıyla yola devam et","r_desert"]]},
+  r_garden_good:{scene:'garden',mode:'good',place:'Bir bahçe',
+    text:"\"Her şeyin iyisine bak\" kuralıyla hareket etti; pis şeylere hiç bakmadı. İyi şeylerden iyice faydalandı, güzelce dinlendi ve yola çıktı.",
+    c:[["Yola devam et","r_desert"],["Sahraya doğru yürü","r_desert"]]},
+  r_desert:{scene:'desert',mode:'right',place:'Büyük sahra',
+    text:"Sonra gide gide o da kardeşi gibi büyük bir sahraya girdi. Birden saldıran bir aslanın sesini duydu ve korktu.",
+    c:[["\"Bu sahranın bir sahibi var\" diye düşün","r_desert_calm"],["Paniğe kapıl, kaç","r_desert_panic"]]},
+  r_desert_calm:{scene:'desert',mode:'calm',place:'Büyük sahra',
+    text:"Güzel düşüncesiyle şöyle dedi: \"Bu sahranın bir hâkimi var. Bu aslanın da o hâkimin emrinde bir hizmetkâr olması mümkün.\" Bununla teselli buldu ama yine de kaçtı. Derken altmış arşın (yani: eski bir ölçü, bir arşın aşağı yukarı bir kol boyu) derinliğinde susuz bir kuyuya rastladı ve kendini içine attı.",
+    c:[["Bir şeye tutun!","r_well"],["Elini uzat!","r_well"]]},
+  r_desert_panic:{scene:'desert',mode:'panic',place:'Büyük sahra',
+    text:"Ne olduğunu düşünmeden, can havliyle kaçtın. Altmış arşın (yani: eski bir ölçü, bir arşın aşağı yukarı bir kol boyu) derinliğinde susuz bir kuyuya rastladın ve korkuyla kendini içine attın.",
+    c:[["Bir şeye tutun!","r_well"],["Elini uzat!","r_well"]]},
+  r_well:{scene:'well',mode:'right',place:'Kuyu',
+    text:"Kardeşi gibi kuyunun ortasında bir ağaca eli yapıştı, havada asılı kaldı. Baktı: Biri beyaz, biri siyah iki fare ağacın iki kökünü kemiriyor. Yukarıda aslan nöbetçi gibi bekliyor. Aşağıda dehşetli bir ejderha başını kaldırmış; ağzı kuyunun ağzı kadar geniş. Duvarlarda ısıran, zararlı böcekler var. O da korktu; ama kardeşinin dehşetinden bin derece hafif.",
+    c:[["\"Bu işler birbirine bağlı\" diye düşün","r_think"],["\"Hepsi tesadüf\" de","r_chance"]]},
+  r_chance:{scene:'well',mode:'chance',place:'Kuyu',
+    text:"\"Hepsi tesadüf\" dedin. Gördüğünü sıradan bir şey saydın ve korkun bir anda büyüdü. Aslan, fareler, ejderha... Hepsi birden üstüne geliyor gibi.",
+    c:[["Yine de düşün: Bu kadar iş tesadüf olabilir mi?","r_think"],["Gözlerini kapat, titre","end_mid"]]},
+  r_think:{scene:'well',mode:'think',place:'Kuyu',
+    text:"Güzel ahlakı ona güzel bir fikir verdi: \"Bu acayip işler birbiriyle bağlantılı; sanki bir emirle hareket ediyorlar. Öyleyse bunda bir tılsım var. Bunlar gizli bir hâkimin emriyle dönüyor. Öyleyse ben yalnız değilim. O gizli hâkim bana bakıyor, beni deniyor; bir maksat için beni bir yere götürüp davet ediyor.\"",
+    c:[["\"Beni deneyen kim?\"","r_love"],["Merak et","r_love"]]},
+  r_love:{scene:'well',mode:'love',place:'Kuyu',
+    text:"Bu tatlı korkudan ve güzel fikirden bir merak doğdu: \"Beni deneyen, kendini bana tanıtmak isteyen ve bu acayip yolla bir maksada götüren kim?\" Tanıma merakından tılsım sahibine bir sevgi doğdu. Sevgiden tılsımı açma arzusu, o arzudan da tılsım sahibini razı edecek, hoşuna gidecek güzel bir hal alma isteği doğdu.",
+    c:[["Ağacın tepesine bak","r_fruit"],["Yukarı bak","r_fruit"]]},
+  r_fruit:{scene:'well',mode:'fruit',place:'Bin meyveli ağaç',
+    text:"Ağacın tepesine baktı: Bir incir ağacı! Ama başında binlerce ağacın meyvesi var, cevizden nara kadar. O an korkusu bütün bütün gitti. Çünkü kesin anladı: Bu incir ağacı bir liste, bir katalog, bir sergi. Gizli hâkim, bağındaki ve bahçesindeki meyvelerin numunelerini bir tılsım ve mucizeyle bu ağaca takmış; misafirlerine hazırladığı yemeklere işaret olsun diye. Yoksa tek bir ağaç binlerce ağacın meyvesini vermez.",
+    c:[["Tadına bak, yemeyi ertele","r_niyaz"],["Hepsini hemen yut","r_gulp"]]},
+  r_gulp:{scene:'well',mode:'gulp',place:'Bin meyveli ağaç',
+    text:"Meyveleri hayvan gibi yutmaya başladın. Ama bunlar numune: Tatmaya izin var, tâ ki asıllarına talip olup müşteri olasın; yutmaya izin yok. Üstelik bir kısmı zehirli ve zararlı. Midene ağrı, kalbine korku doluyor.",
+    c:[["Dur, tadına bakıp bekle","r_niyaz"],["Yutmaya devam et","end_mid"]]},
+  r_niyaz:{scene:'well',mode:'niyaz',place:'Niyaz',
+    text:"Tadına baktı, işi anladı, yemeyi erteledi ve beklemenin tadını çıkardı. Sonra yalvarmaya başladı; tâ ki tılsımın anahtarı kalbine doğdu.",
+    c:[["\"Ey bu yerlerin hâkimi!\" diye seslen","door"],["Kendi gücünle tırmanmayı dene","r_climb"]]},
+  r_climb:{scene:'well',mode:'climb',place:'Kuyu',
+    text:"Tırmanmaya çalıştın ama yukarıda aslan nöbette, aşağıda ejderha bekliyor, kökler de durmadan kemiriliyor. Kendi gücün bu kuyudan çıkmaya yetmiyor.",
+    c:[["\"Ey bu yerlerin hâkimi!\" diye seslen","door"],["Tadına bakıp bekle","r_niyaz"]]},
+  door:{scene:'door',mode:'open',place:'Bahçeye açılan kapı',noHud:true,
+    text:"Bağırdı: \"Ey bu yerlerin hâkimi! Senin bahtına düştüm, sana sığınıyorum. Senin hizmetkârınım. Senin rızanı istiyorum ve seni arıyorum.\" Bu yalvarıştan sonra birden kuyunun duvarı yarıldı; şahane, tertemiz, güzel bir bahçeye bir kapı açıldı. Belki de ejderhanın ağzı o kapıya dönüştü. Aslan ve ejderha iki hizmetkâr kılığına girdi, onu içeri davet ediyorlar. Hatta aslan, ona boyun eğmiş bir binek atı oldu.",
+    c:[["Bahçeye gir","inside"],["İçeri davet edildin, gir","inside"]]},
+  inside:{scene:'door',mode:'best',place:'Şahane bahçe',noHud:true,
+    text:"Artık o, bu yerlerin cömert sahibinin aziz bir misafiri. Ev sahibinin acayip hizmetkârlarıyla dostluk edip eğleniyor; aslan ona boyun eğmiş bir binek atı olmuş. Kuyudayken bile garip şeyleri lezzetli bir ibret, tatlı bir korku ve sevgili bir tanıma içinde seyretmişti; kardeşi ise aynı şeyleri dehşet içinde görmüştü.",
+    c:[["İki kardeşi karşılaştır","m0"],["Misalin anlamı ne?","m0"]]},
+
+  m0:{scene:'meaning',mode:'compare',place:'İki kardeşin hâli',noHud:true,
+    text:"Gelin, iki kardeşi karşılaştıralım: Sol yolun bedbaht yolcusu her an ejderhanın ağzına girmeyi bekliyor, titriyor; bu bahtiyar ise meyveli, parlak bir bahçeye davet ediliyor. O, korku ve kimsesizlik içinde azap çekiyor; bu, ümit ve özlem içinde lezzet alıyor. O, kendini vahşi canavarlara atılmış bir mahkûm sanıyor; bu, cömert bir ev sahibinin aziz misafiri. O, yazın güzel bir bahçede dostlarının arasındaki ziyafeti beğenmeyip kendini zehirli içkilerle sarhoş eden, sonra kendini kışın canavarlar arasında, aç ve çıplak sanıp ağlayan adam gibi; kendi kendine zulmediyor. \"Kötülüğü kendinden, iyiliği Allah'tan bil.\"",
+    c:[["Misalin anlamı ne?","m1"],["Devam et","m1"]]},
+  m1:{scene:'meaning',mode:'brothers',place:'Misalin anlamı',noHud:true,
+    text:"İki kardeş: Biri mümin ruh ve salih kalp, diğeri kâfir ruh ve fasık kalp. Sağ yol Kur'an ve iman yolu; sol yol isyan ve inkâr yolu. Yoldaki bahçe, iyisiyle kötüsüyle, temiziyle pisiyle beraber bulunan toplum hayatıdır. Akıllı olan \"Huz mâ safâ, da' mâ keder\" (yani: temizini al, bulanığını bırak) kuralıyla hareket eder, kalbi selamette yoluna gider.",
+    c:[["Ya sahra ve kuyu?","m2"],["Devam et","m2"]]},
+  m2:{scene:'meaning',mode:'well',place:'Sahra, kuyu, ağaç',noHud:true,
+    text:"Sahra bu dünya, aslan ölüm ve eceldir. Kuyu insanın bedeni ve hayat süresidir. Altmış arşın derinlik, ortalama altmış yıllık ömre işarettir. Ağaç ömrün süresi ve hayatın maddesidir. Siyah ve beyaz iki hayvan ise gece ve gündüzdür.",
+    c:[["Ya ejderha ve böcekler?","m3"],["Devam et","m3"]]},
+  m3:{scene:'meaning',mode:'bugs',place:'Ejderha ve böcekler',noHud:true,
+    text:"Ejderha, ağzı kabir olan berzah yolu ve ahiret kapısıdır; ama o ağız mümin için zindandan bahçeye açılan bir kapıdır. Zararlı böcekler dünya musibetleridir; ama mümin için gaflet uykusuna dalmasın diye tatlı ilahi uyarılar ve Rahmân'ın iltifatlarıdır.",
+    c:[["Ya meyveler?","m4"],["Devam et","m4"]]},
+  m4:{scene:'meaning',mode:'fruits',place:'Meyveler',noHud:true,
+    text:"Ağaçtaki meyveler dünya nimetleridir. Kerîm olan Allah onları ahiret nimetlerine bir liste, hatırlatıcı ve benzer numuneler olarak, cennet meyvelerine müşteri çağıran örnekler suretinde yapmıştır. Tek bir ağacın bambaşka meyveler vermesi ise O'nun mührüdür: Bir topraktan bütün bitkileri ve meyveleri, bir sudan bütün hayvanları yapmak; çeşit çeşit yemeklerden bir canlıya kendine has bir et yapmak. Bir şeyi her şey, her şeyi bir şey yapmak, her şeyi Yaratan'a has bir nişandır.",
+    c:[["Ya tılsım ve anahtar?","m5"],["Devam et","m5"]]},
+  m5:{scene:'meaning',mode:'key',place:'Tılsımın anahtarı',noHud:true,
+    text:"Tılsım, iman sırrıyla açılan yaratılış hikmetinin sırrıdır. Anahtar ise şudur: \"Yâ Allah\" ve \"Lâ ilâhe illallah, Allahu lâ ilâhe illâ hüve'l-Hayyü'l-Kayyûm.\" (Yani: Allah'tan başka ilah yoktur; O diridir, her şeyi ayakta tutandır.)",
+    c:[["Ya açılan kapı?","m6"],["Devam et","m6"]]},
+  m6:{scene:'meaning',mode:'door',place:'Kapı ve at',noHud:true,
+    text:"Ejderha ağzının bahçe kapısına dönmesi şuna işarettir: Kabir, yolunu kaybedenler için dar ve karanlık bir zindan kapısıdır; Kur'an ve iman ehli için ise dünya zindanından ebedi bahçeye, imtihan meydanından cennete, hayatın zahmetinden Rahmân'ın rahmetine açılan bir kapıdır. Aslanın binek ata dönmesi de şuna işarettir: Ölüm, yolunu kaybeden için sevdiklerinden ebedi bir ayrılıktır; iman ehli için ise öteki âleme gitmiş dostlarına kavuşmak, gerçek vatanına girmek, hayat vazifesinden terhis ve imtihandan paydostur.",
+    c:[["Sonuç ne?","m7"],["Devam et","m7"]]},
+  m7:{scene:'meaning',mode:'sum',place:'Elhâsıl',noHud:true,
+    text:"Ey nefsim ve bu hikayeyi dinleyen arkadaş! Bedbaht kardeş değil de bahtiyar kardeş olmak istersen, Kur'an'ı dinle, hükmüne uy, ona sarıl. Kısacası: Kim fani hayatı asıl maksat yaparsa, görünüşte bir cennette olsa da manen cehennemdedir. Kim de baki hayata ciddi yönelirse iki dünyada mutluluğa erer. Dünyası ne kadar kötü ve sıkıntılı olsa da onu cennetin bekleme salonu gibi gördüğü için hoş görür, katlanır, sabır içinde şükreder.",
+    c:[["Duayı oku","end_best"],["Bitir","end_best"]]},
+
+  l_road:{scene:'road',mode:'left',place:'Sol yol',
+    text:"Ahlaksız ve serseri olan kardeş sırf serbestlik için sol yolu seçti. Görünüşte hafif, aslında ağır bir halde gidiyor. Dereden tepeden aşıyor, kimseye uymuyor.",
+    c:[["Yola devam et","l_garden"],["Dereden tepeden aş","l_garden"]]},
+  l_garden:{scene:'garden',mode:'leftbad',place:'Bir bahçe',
+    text:"Bir bahçeye rastladı: Güzel çiçekler de var, bakılmadığı için pis şeyler de. O ise pis şeylere dikkat etti, onlarla uğraştı; midesi bulandı, hiç dinlenmeden çıkıp gitti.",
+    c:[["Yola devam et","l_desert"],["Sahraya doğru git","l_desert"]]},
+  l_desert:{scene:'desert',mode:'left',place:'Boş bir sahra',
+    text:"Gide gide boş bir sahraya girdi. Birden korkunç bir ses duydu: Dehşetli bir aslan meşelikten çıkmış, ona saldırıyor! Kaçtı. Altmış arşın (yani: eski bir ölçü, bir arşın aşağı yukarı bir kol boyu) derinliğinde susuz bir kuyuya rastladı ve korkusundan kendini içine attı.",
+    c:[["Bir şeye tutun!","l_well"],["Elini uzat!","l_well"]]},
+  l_well:{scene:'well',mode:'left',place:'Kuyu',
+    text:"Yarısına kadar düştü, elleri bir ağaca rastladı, yapıştı. Biri beyaz biri siyah iki fare, ağacın iki kökünü kesiyor. Yukarıda aslan nöbetçi gibi bekliyor; aşağıda dehşetli bir ejderha başını kaldırmış, ayağına yaklaşmış. Duvarlarda ısırıcı böcekler. Tepede bir incir ağacı, ama başında cevizden nara kadar çeşit çeşit meyve. Bu adam anlamıyor ki bu sıradan bir iş değil; bu acayip işlerde garip sırlar ve çok büyük bir işleyici var.",
+    c:[["Kulağını kapat, meyveleri ye","l_eat"],["Kalbinin feryadını dinle","l_heart"]]},
+  l_heart:{scene:'well',mode:'leftheart',place:'Kuyu',
+    text:"Kalbi, ruhu ve aklı bu acı durumdan gizlice feryat edip ağlıyor. Ama nefsi, sanki hiçbir şey yokmuş gibi bilmezlikten geliyor; ruhun ve kalbin ağlamasına kulağını kapatıyor, kendi kendini aldatıyor. Sanki bir bahçedeymiş gibi davranıyor.",
+    c:[["Nefsine uy, meyveleri ye","l_eat"],["Öteki kardeşin hâline bak","r_road"]]},
+  l_eat:{scene:'well',mode:'lefteat',place:'Kuyu',
+    text:"Bir bahçedeymiş gibi ağacın meyvelerini yemeye başladı. Hâlbuki bir kısmı zehirli ve zararlıydı. Bir kudsî hadiste Allah buyurur: \"Ene inde zanni abdî bî.\" (Yani: Kulum beni nasıl tanırsa, onunla öyle muamele ederim.) Bu bedbaht, kötü zannı ve akılsızlığıyla gördüğünü sıradan ve gerçeğin ta kendisi saydı; öyle de muamele gördü.",
+    c:[["Sonra ne oldu?","end_left"],["...","end_left"]]},
+
+  end_best:{scene:'dua',place:'Dua',end:true,best:true,noHud:true,title:'SON: Bahçeye Açılan Kapı',
+    text:"Güzel ahlak güzel fikir verdi, güzel fikir her şeyin güzel yüzünü gösterdi; kuyunun dibindeki ejderhanın ağzı bahçeye açılan bir kapı oldu. Allâhümme'c'alnâ min ehli's-saâdeti ve's-selâmeti ve'l-Kur'âni ve'l-îmân. Âmîn. (Allah'ım, bizi saadet, selamet, Kur'an ve iman ehlinden eyle. Âmin.)"},
+  end_mid:{scene:'well',mode:'midend',place:'Kuyu',end:true,title:'SON: Açılmayan Tılsım',
+    text:"Sağ yoldan geldin ama kuyuda nasıl baktığını unuttun. \"Kulum beni nasıl tanırsa, onunla öyle muamele ederim.\" Gördüğünü sıradan ve tesadüf saydın, tılsım açılmadı. Aslan yukarıda, ejderha aşağıda, fareler kökleri kemiriyor; sen de kardeşin gibi titriyorsun. Doğru yolda olmak yetmiyor, nasıl baktığın da önemli."},
+  end_left:{scene:'well',mode:'leftend',place:'Kuyu',end:true,title:'SON: Ne Ölür Ne Yaşar',
+    text:"Ne ölüyor ki kurtulsun, ne de yaşıyor. Böylece azap çekiyor; her an ejderhanın ağzına girmeyi bekleyip titriyor. Gündüz gibi güzel bir hakikati, körlüğüyle kendine karanlık bir cehennem yaptı. Ne acınmayı hak ediyor ne de kimseden şikâyete hakkı var. Biz de onu bu azapta bırakıp öteki kardeşin hâline bakmaya dönüyoruz.",
+    c:[["Öteki kardeşin hâline bak","r_road"],["Baştan başla","__restart"]]}
+};
+const ENDINGS=['end_best','end_mid','end_left'];
+
+/* ---------- engine ---------- */
+const $=id=>document.getElementById(id);
+const textEl=$('text'),srEl=$('sr'),placeEl=$('place'),etitle=$('etitle'),b1=$('c1'),b2=$('c2'),dotsEl=$('dots'),countEl=$('ecount'),sndBtn=$('snd');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let node='start',hist=[],tick=10,typer=null;
+const cache=new Map();
+
+function load(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+let found=load('altmis-arsin-sonlar',[]);if(!Array.isArray(found))found=[];
+let soundOn=load('altmis-arsin-ses',true)!==false;SES.setOn(soundOn);
+
+function beep(f,d=.08){if(soundOn)SES.beep(f,d);}
+function jingle(good){if(soundOn)SES.jingle(good);}
+
+function renderDots(){dotsEl.innerHTML='';ENDINGS.forEach(id=>{const d=document.createElement('span');const on=found.includes(id);d.className='dot'+(on?' on':'');d.title=on?STORY[id].title.replace('SON: ',''):'???';dotsEl.appendChild(d);});countEl.textContent=found.length;}
+function renderSound(){sndBtn.textContent='Ses: '+(soundOn?'açık':'kapalı');sndBtn.setAttribute('aria-pressed',String(soundOn));}
+function stepsNow(){return STORY[node].noHud?null:hist.length;}
+
+function renderInto(canvas,scene,mode){
+  const ctx=canvas.getContext('2d'),key=scene+':'+(mode||'');
+  let bg=cache.get(key);
+  if(!bg){bg=document.createElement('canvas');bg.width=W;bg.height=H;g=bg.getContext('2d');SCENES[scene].bg(mode);cache.set(key,bg);}
+  g=ctx;ctx.clearRect(0,0,W,H);ctx.drawImage(bg,0,0);SCENES[scene].fx(tick,mode||'');g=main;
+}
+function draw(){const n=STORY[node];renderInto(cv,n.scene,n.mode);main.drawImage(vig,0,0);g=main;lifeTree(stepsNow(),tick);}
+
+function type(s){clearInterval(typer);srEl.textContent=s;if(reduce){textEl.textContent=s;return;}let i=0;textEl.textContent='';typer=setInterval(()=>{i+=3;textEl.textContent=s.slice(0,i);if(i>=s.length)clearInterval(typer);},22);}
+
+/* sounds: ambient per scene, effects per story node (see ses.js) */
+const SOUND={"amb":{"fork":"birds","road:right":"birds","road:left":"wind","garden":"garden","desert":"wind","well":"cave","well:chance":"hum","well:midend":"hum","well:left":"hum","well:leftheart":"hum","well:lefteat":"hum","well:leftend":"hum","door":"garden","meaning":"quiet","dua":null},
+  "fx":{"r_garden_bad":"buzz","l_garden":"buzz","r_desert":"roar","l_desert":"roar","r_well":"gnaw","l_well":"gnaw","r_chance":"hiss","r_fruit":"sparkle","door":["sparkle","door"],"inside":"neigh","end_left":"hiss","end_mid":"hiss"}};
+function show(){
+  const n=STORY[node];SES.scene(SOUND,node,n);
+  placeEl.textContent=n.place;
+  cv.setAttribute('aria-label','Sahne: '+n.place);
+  etitle.hidden=!n.end;
+  if(n.end){etitle.textContent=(n.best?'★ ':'')+n.title;if(!found.includes(node)){found.push(node);save('altmis-arsin-sonlar',found);}renderDots();}
+  const ch=n.end?(n.c||[["Baştan başla","__restart"],["Son seçime geri dön","__back"]]):n.c;
+  [b1,b2].forEach((b,i)=>{b.querySelector('.lbl').textContent=ch[i][0];b.dataset.to=ch[i][1];});
+  type(n.text);draw();
+}
+
+function choose(b){
+  const to=b.dataset.to;
+  if(to==='__restart'){hist=[];node='start';beep(440);}
+  else if(to==='__back'){node=hist.pop()||'start';beep(440);}
+  else{hist.push(node);node=to;const n=STORY[to];if(n.end)jingle(!!n.best);else beep(b===b1?660:880);}
+  show();
+}
+document.addEventListener('touchstart',()=>{},{passive:true}); // lets :active show while a finger is down on iOS
+b1.addEventListener('click',()=>choose(b1));
+b2.addEventListener('click',()=>choose(b2));
+textEl.addEventListener('click',()=>{clearInterval(typer);textEl.textContent=STORY[node].text;});
+document.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;if(e.key==='1'){e.preventDefault();choose(b1);}else if(e.key==='2'){e.preventDefault();choose(b2);}});
+sndBtn.addEventListener('click',()=>{soundOn=!soundOn;SES.setOn(soundOn);save('altmis-arsin-ses',soundOn);renderSound();beep(700);});
+
+window.claude?.hot?.snapshot?.(()=>({node,hist}));
+function start(d){if(d&&d.node&&STORY[d.node]){node=d.node;hist=Array.isArray(d.hist)?d.hist:[];}renderDots();renderSound();show();
+  if(!reduce)setInterval(()=>{tick++;draw();},110);}
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+})();
+</script>
+
+</body>
+</html>

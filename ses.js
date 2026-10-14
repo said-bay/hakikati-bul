@@ -211,6 +211,17 @@
     splash(t, d, k = 1) { burst(t, 0.5, 0.35 * k, d, 'bandpass', 1200, 500, 0.8); },
     gust(t, d, k = 1) { burst(t, 1.4, 0.3 * k, d, 'bandpass', 500, 1500, 0.8, 0.5); },
     drumroll(t, d, k = 1) { FX.snare(t, d, k); },
+    gnaw(t, d, k = 1) { for (let i = 0; i < 14; i++) burst(t + i * 0.05 + rnd(0, 0.02), 0.012, 0.18 * k, d, 'highpass', 3500); tone('sine', 3600, t + 0.3, 0.05, 0.03 * k, d, 4200); tone('sine', 3400, t + 0.75, 0.05, 0.03 * k, d, 4000); },
+    buzz(t, d, k = 1) {
+      const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 420; f.Q.value = 1.5; f.connect(d);
+      const o = tone('sawtooth', 190, t, 1.4, 0.12 * k, f, 0, 0.2); lfo(o.frequency, 7, 25).stop(t + 1.5);
+    },
+    hiss(t, d, k = 1) { burst(t, 1.4, 0.22 * k, d, 'highpass', 2800, 0, 0.7, 0.5); const o = tone('sawtooth', 72, t, 1.4, 0.12 * k, d, 55, 0.4); lfo(o.frequency, 18, 10).stop(t + 1.5); },
+    neigh(t, d, k = 1) {
+      const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1300; f.Q.value = 1.2; f.connect(d);
+      const o = tone('square', 620, t, 0.9, 0.07 * k, f, 520, 0.05); o.frequency.setValueAtTime(620, t); o.frequency.linearRampToValueAtTime(940, t + 0.25); o.frequency.linearRampToValueAtTime(560, t + 0.9);
+      lfo(o.frequency, 13, 45).stop(t + 1); burst(t + 1.0, 0.25, 0.2 * k, d, 'bandpass', 700, 0, 1.2);
+    },
     whistleShort(t, d, k = 1) { const o = tone('sine', 2500, t, 0.6, 0.06 * k, d, 0, 0.02); lfo(o.frequency, 22, 180).stop(t + 0.7); },
   };
 
