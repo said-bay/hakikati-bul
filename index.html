@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hakikati Bul</title>
+<link rel="icon" type="image/png" href="img/kandil.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=VT323&display=swap">
+<style>
+/* Layout: a game-shelf — pixel title, then a wrapping grid of cartridge cards, each one a door into a game */
+:root{
+  --bg:#0c0a18; --panel:#16132a; --ink:#f4ecd8; --dim:#a39cbc; --accent:#ffd23f; --line:#3a3466; --shadow:#7a3a1c; --deep:#05040c; --ring:#221d3e;
+  --display:"Pixelify Sans", ui-monospace, "Courier New", monospace;
+  --body:"VT323", ui-monospace, "Courier New", monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--body);padding-inline:16px;padding-block:32px 48px;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-direction:column;gap:8px}
+.brand{display:flex;align-items:center;gap:16px}
+.logo{width:clamp(56px,12vw,80px);height:auto;image-rendering:pixelated;border-radius:22%;box-shadow:4px 4px 0 var(--deep);flex:none}
+.sub{font-family:var(--display);font-weight:500;font-size:clamp(16px,3.4vw,22px);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:6px 0 0}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,8vw,64px);letter-spacing:.05em;line-height:1;margin:0;color:var(--accent);text-shadow:4px 4px 0 var(--shadow);text-wrap:balance}
+.lead{font-size:clamp(22px,4vw,28px);color:var(--ink);margin:0;max-width:40ch}
+.lead span{color:var(--dim)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:22px}
+.card{display:flex;flex-direction:column;background:var(--panel);border:4px solid var(--line);box-shadow:8px 8px 0 var(--deep);color:inherit;text-decoration:none;min-width:0;transition:transform .12s steps(2),box-shadow .12s steps(2),border-color .12s}
+.card:hover,.card:focus-visible{transform:translate(-3px,-3px);box-shadow:11px 11px 0 var(--deep);border-color:var(--accent);outline:none}
+.card:focus-visible{box-shadow:11px 11px 0 var(--deep),0 0 0 3px var(--accent)}
+.thumb{position:relative;border-bottom:4px solid var(--line)}
+.thumb img{display:block;width:100%;height:auto;aspect-ratio:16/9;image-rendering:pixelated;image-rendering:crisp-edges}
+.no{position:absolute;left:8px;top:8px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.1em;background:rgba(5,4,12,.82);color:var(--accent);padding:3px 8px}
+.body{display:flex;flex-direction:column;gap:10px;padding:16px 16px 18px;flex:1}
+.src{font-family:var(--display);font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0}
+h2{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:.03em;margin:0;line-height:1.1}
+.desc{font-size:21px;line-height:1.15;margin:0;color:var(--ink)}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;padding-top:6px;font-size:19px;color:var(--dim)}
+.play{font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.08em;background:var(--accent);color:var(--deep);padding:6px 12px;flex:none}
+.card:nth-child(1) h2{color:#ffd23f}
+.card:nth-child(2) h2{color:#7ad8b0}
+.card h2.c3{color:#e8c060}
+.card h2.c4{color:#f2c14e}
+.card h2.c5{color:#e8b048}
+.card h2.c6{color:#7ad8b0}
+.card h2.c7{color:#f2c14e}
+footer{font-size:20px;color:var(--dim);border-top:2px dashed var(--line);padding-top:18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#intro{position:fixed;inset:0;z-index:50;background:#05040c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;cursor:pointer;transition:opacity .4s steps(4)}
+#intro.done{opacity:0;pointer-events:none}
+#intro canvas{image-rendering:pixelated;width:min(70vw,360px);height:auto}
+#intro .tagline{font-family:var(--display);font-weight:500;font-size:clamp(15px,4.2vw,22px);letter-spacing:.14em;color:var(--accent);min-height:1.4em;margin:0;text-align:center;padding-inline:16px}
+#intro .brand2{display:none;flex-direction:column;align-items:center;gap:12px}
+#intro .brand2 img{width:min(30vw,120px);image-rendering:pixelated;border-radius:22%}
+#intro .brand2 b{font-family:var(--display);font-weight:700;font-size:clamp(26px,8vw,40px);letter-spacing:.06em;color:var(--accent);text-shadow:3px 3px 0 var(--shadow)}
+#intro .brand2 span{font-family:var(--display);font-size:clamp(13px,3.6vw,18px);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+#intro .skip{position:absolute;bottom:calc(18px + env(safe-area-inset-bottom,0px));font-size:18px;color:var(--dim)}
+@media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover,.card:focus-visible{transform:none}}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><img class="logo" src="img/kandil.png" alt="" width="72" height="72"><div><h1>HAKİKATİ BUL</h1><p class="sub">Hikayeli Oyunlar</p></div></div>
+    <p class="lead">Oku, düşün, seç. <span>Her seçim hikayeyi başka bir yere götürür.</span></p>
+  </header>
+
+  <main class="grid">
+    <a class="card" href="bismillah-ile-yolculuk.html">
+      <div class="thumb"><img src="img/bismillah-ile-yolculuk.png" alt="Gün doğumunda çölün kenarında yaşlı bir dede, iki yolcu ve bir deve" width="160" height="90"><span class="no">OYUN 1</span></div>
+      <div class="body">
+        <p class="src">Birinci Söz'den</p>
+        <h2>Bismillah ile Yolculuk</h2>
+        <p class="desc">İki yolcu büyük bir çölü geçecek. Reisin adını alan güvende olur. Her şey neden Bismillah der?</p>
+        <div class="meta"><span>4 farklı son</span><span class="play">OYNA ▸</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="iki-memleket.html">
+      <div class="thumb"><img src="img/iki-memleket.png" alt="Yol ayrımı: solda yağmurlu gri bir memleket, sağda güneşli renkli bir memleket" width="160" height="90"><span class="no">OYUN 2</span></div>
+      <div class="body">
+        <p class="src">İkinci Söz'den</p>
+        <h2>İki Memleket</h2>
+        <p class="desc">Aynı memleket, iki ayrı göz. Biri her yeri gri ve korkunç görüyor, öteki bayram yeri. Gözdeki perde kalkabilir mi?</p>
+        <div class="meta"><span>3 farklı son</span><span class="play">OYNA ▸</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="iki-asker.html">
+      <div class="thumb"><img src="img/iki-asker.png" alt="Yol ayrımında yolu bilen yaşlı adam, on yolcu tabelası ve iki asker" width="160" height="90"><span class="no">OYUN 3</span></div>
+      <div class="body">
+        <p class="src">Üçüncü Söz'den</p>
+        <h2 class="c3">İki Asker</h2>
+        <p class="desc">Uzak bir şehre giden iki asker. Biri çantasını ve silahını taşıyor, öteki yükünü atıp hafif gidiyor. Hangisi rahat eder?</p>
+        <div class="meta"><span>3 farklı son</span><span class="play">OYNA ▸</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="yirmi-dort-altin.html">
+      <div class="thumb"><img src="img/yirmi-dort-altin.png" alt="İstasyonda tren, gemi, uçak ve atlı araba; köşede bin altın gösteren sayaç" width="160" height="90"><span class="no">OYUN 4</span></div>
+      <div class="body">
+        <p class="src">Dördüncü Söz'den</p>
+        <h2 class="c4">Yirmi Dört Altın</h2>
+        <p class="desc">Hükümdar iki hizmetkârına yirmi dörder altın veriyor. Biri altınlarını kumara harcıyor, öteki bire bin kazanıyor. Peki bilet ne?</p>
+        <div class="meta"><span>4 farklı son</span><span class="play">OYNA ▸</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="iki-nefer.html">
+      <div class="thumb"><img src="img/iki-nefer.png" alt="Çadırlı ordugâhta sıra sıra talim yapan askerler ve çavuş" width="160" height="90"><span class="no">OYUN 5</span></div>
+      <div class="body">
+        <p class="src">Beşinci Söz'den</p>
+        <h2 class="c5">İki Nefer</h2>
+        <p class="desc">Seferberlikte iki asker: Biri talime çıkıyor, öteki karnını düşünüp çarşıya gidiyor. Kimin görevi beslemek, kimin görevi talim?</p>
+        <div class="meta"><span>3 farklı son</span><span class="play">OYNA ▸</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="bes-kar.html">
+      <div class="thumb"><img src="img/bes-kar.png" alt="Fırtınalı çiftliğe gökten ışık içinde inen mühürlü ferman" width="160" height="90"><span class="no">OYUN 6</span></div>
+      <div class="body">
+        <p class="src">Altıncı Söz'den</p>
+        <h2 class="c6">Beş Kâr</h2>
+        <p class="desc">Padişah iki kişiye emanet çiftlikler veriyor, sonra bir fermanla "Bana satın" diyor. Beş kat kâr mı, beş kat zarar mı?</p>
+        <div class="meta"><span>3 farklı son</span><span class="play">OYNA ▸</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="iki-tilsim.html">
+      <div class="thumb"><img src="img/iki-tilsim.png" alt="Gün batımında yaralı bir asker, arkasında aslan, önünde darağacı ve yanında nurlu, beyaz sakallı bir zat" width="160" height="90"><span class="no">OYUN 7</span></div>
+      <div class="body">
+        <p class="src">Yedinci Söz'den</p>
+        <h2 class="c7">İki Tılsım</h2>
+        <p class="desc">Yaralı bir asker, arkasında aslan, önünde darağacı. Nurlu bir zat ona iki tılsım, iki ilaç ve bir bilet veriyor. Aldatıcıya kanacak mı?</p>
+        <div class="meta"><span>3 farklı son</span><span class="play">OYNA ▸</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="kayip-yildiz.html">
+      <div class="thumb"><img src="img/kayip-yildiz.png" alt="Kristal mağarada altın yığınının başında uyuyan mor bir ejderha" width="160" height="90"><span class="no">MACERA</span></div>
+      <div class="body">
+        <p class="src">Bir piksel macerası</p>
+        <h2>Kayıp Yıldız</h2>
+        <p class="desc">Gökten düşen yıldızı bul. Bilge Nine'ye danış, kurtla dost ol, ejderhayla bilmece yarışına gir.</p>
+        <div class="meta"><span>8 farklı son</span><span class="play">OYNA ▸</span></div>
+      </div>
+    </a>
+  </main>
+
+  <footer><span>Yeni oyunlar yolda.</span><span><a href="gizlilik.html" style="color:inherit">Gizlilik politikası</a></span></footer>
+</div>
+
+<div id="intro" role="button" tabindex="0" aria-label="Girişi geç">
+  <canvas id="asb" width="64" height="24"></canvas>
+  <p class="tagline" id="tagline"></p>
+  <div class="brand2" id="brand2"><img src="img/kandil.png" alt=""><b>HAKİKATİ BUL</b><span>Hikayeli Oyunlar</span></div>
+  <span class="skip">Geçmek için dokun</span>
+</div>
+<script>
+(() => {
+  const el=document.getElementById('intro');
+  const seen=location.hash==='#back';
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(seen){el.remove();return;}
+  const cv=document.getElementById('asb'),g=cv.getContext('2d'),tag=document.getElementById('tagline'),brand=document.getElementById('brand2');
+  const F={A:[".###.","#...#","#...#","#####","#...#","#...#","#...#"],S:[".####","#....","#....",".###.","....#","....#","####."],B:["####.","#...#","#...#","####.","#...#","#...#","####."]};
+  const px=[];"ASB".split('').forEach((ch,i)=>F[ch].forEach((row,y)=>row.split('').forEach((v,x)=>{if(v==='#')px.push([8+i*17+x*3,3+y*3]);})));
+  const order=px.map((p,i)=>[Math.random(),i]).sort((a,b)=>a[0]-b[0]).map(a=>a[1]);
+  const text='Geleceği Bugün Tasarlıyoruz';let t0=performance.now(),finished=false,ac=null;
+  function beep(f,d){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),gn=ac.createGain();o.type='square';o.frequency.value=f;gn.gain.setValueAtTime(.04,ac.currentTime);gn.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(gn).connect(ac.destination);o.start();o.stop(ac.currentTime+d+.02);}catch(e){}}
+  function finish(){if(finished)return;finished=true;el.classList.add('done');setTimeout(()=>el.remove(),500);}
+  function frame(now){if(finished)return;const ms=reduce?99999:now-t0;
+    g.clearRect(0,0,64,24);const shown=Math.min(px.length,Math.floor(ms/900*px.length));
+    for(let k=0;k<shown;k++){const[x,y]=px[order[k]];g.fillStyle='#7a3a1c';g.fillRect(x+1,y+1,3,3);}
+    for(let k=0;k<shown;k++){const[x,y]=px[order[k]];const sweep=ms>950&&Math.abs(x-((ms-950)/7))<4;g.fillStyle=sweep?'#fff6c8':'#f2c14e';g.fillRect(x,y,3,3);g.fillStyle=sweep?'#ffffff':'#ffe08a';g.fillRect(x,y,1,1);}
+    if(ms>1000){const n=Math.min(text.length,Math.floor((ms-1000)/45));tag.textContent=text.slice(0,n);}
+    if(ms>2600&&brand.style.display!=='flex'){cv.style.display='none';tag.style.display='none';brand.style.display='flex';beep(1047,.12);}
+    if(ms>3800){finish();return;}requestAnimationFrame(frame);}
+  if(!reduce){[523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,.09),300+i*220));}
+  el.addEventListener('click',finish);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '||e.key==='Escape')finish();});
+  requestAnimationFrame(frame);if(reduce)setTimeout(finish,1200);
+})();
+</script>
+
+</body>
+</html>

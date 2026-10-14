@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bismillah ile Yolculuk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=VT323&display=swap">
+<style>
+/* Layout: one centered column like a desert storybook cabinet — pixel screen, story box, two choices, ending tracker */
+:root{
+  --bg:#0d0a1a; --panel:#1a1426; --ink:#f4ead2; --dim:#a596b0; --accent:#f2c14e; --line:#5a3a5e; --hot:#ff9a4a; --shadow:#7a3a1c; --deep:#060410; --ring:#2a1e3a;
+  --display:"Pixelify Sans", ui-monospace, "Courier New", monospace;
+  --body:"VT323", ui-monospace, "Courier New", monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--body);padding-inline:16px;padding-block:24px 40px;
+  background-image:repeating-linear-gradient(0deg,rgba(255,240,200,.025) 0 1px,transparent 1px 3px)}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,5.6vw,42px);letter-spacing:.04em;margin:0;color:var(--accent);text-shadow:3px 3px 0 var(--shadow);text-wrap:balance}
+.tag{font-size:21px;color:var(--dim)}
+.screen{position:relative;border:4px solid var(--line);box-shadow:0 0 0 4px var(--bg),0 0 0 8px var(--ring),10px 10px 0 6px var(--deep);background:var(--deep)}
+.screen::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 4px)}
+canvas{display:block;width:100%;height:auto;max-width:100%;aspect-ratio:16/9;image-rendering:pixelated;image-rendering:crisp-edges}
+.place{position:absolute;z-index:1;left:8px;top:8px;font-family:var(--display);font-weight:500;font-size:13px;letter-spacing:.12em;text-transform:uppercase;background:rgba(13,10,26,.78);color:var(--ink);padding:4px 8px}
+.box{background:var(--panel);border:4px solid var(--ink);box-shadow:inset 0 0 0 4px var(--panel),inset 0 0 0 6px var(--line);padding:18px 20px 20px;display:flex;flex-direction:column;gap:14px;margin-top:6px}
+.ending-title{font-family:var(--display);font-weight:700;color:var(--accent);font-size:20px;letter-spacing:.04em;margin:0}
+.text{font-size:clamp(22px,4.4vw,27px);line-height:1.15;margin:0;min-height:5.8em;cursor:pointer}
+.choices{display:grid;gap:10px}
+.choice{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;font-size:clamp(21px,4.2vw,25px);line-height:1.1;color:var(--ink);background:transparent;border:2px solid var(--line);padding:9px 12px;cursor:pointer}
+.choice .key{font-family:var(--display);font-weight:700;font-size:14px;background:var(--line);color:var(--ink);padding:3px 8px;flex:none}
+.choice .lbl{min-width:0}
+.choice:hover,.choice:focus-visible{background:var(--accent);color:var(--deep);border-color:var(--accent);outline:none}
+.choice:hover .key,.choice:focus-visible .key{background:var(--deep);color:var(--accent)}
+.choice:focus-visible{box-shadow:0 0 0 3px var(--hot)}
+footer{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap;font-size:21px;color:var(--dim)}
+.endings{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.endings b{color:var(--ink);font-weight:400;font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:5px}
+.dot{width:13px;height:13px;background:var(--ring);border:2px solid var(--line)}
+.dot.on{background:var(--accent);border-color:var(--accent)}
+.sound{font:inherit;font-size:20px;color:var(--dim);background:none;border:2px solid var(--line);padding:2px 10px;cursor:pointer}
+.sound:hover{color:var(--ink)}
+.sound:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:19px;color:var(--dim);margin:0}
+.source{font-size:18px;color:var(--dim);margin:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:480px){.place{font-size:11px;letter-spacing:.08em}.box{padding:14px 14px 16px}}
+</style>
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.back{align-self:flex-start;font-family:var(--display);font-weight:500;font-size:14px;letter-spacing:.08em;color:var(--dim);text-decoration:none;border:2px solid var(--line);padding:5px 10px}
+.back:hover,.back:focus-visible{color:var(--deep);background:var(--accent);border-color:var(--accent);outline:none}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a class="back" href="./#back">‹ Tüm oyunlar</a>
+  <header>
+    <h1>BİSMİLLAH İLE YOLCULUK</h1>
+    <span class="tag">Bir çöl hikayesi · 4 farklı son</span>
+  </header>
+
+  <div class="screen">
+    <canvas id="scene" width="160" height="90" role="img" aria-label="Sahne"></canvas>
+    <div class="place" id="place">Çölün kenarı</div>
+  </div>
+
+  <section class="box">
+    <p class="ending-title" id="etitle" hidden></p>
+    <p class="text" id="text" aria-hidden="true"></p>
+    <p class="sr" id="sr" aria-live="polite"></p>
+    <div class="choices">
+      <button class="choice" id="c1" type="button"><span class="key">1</span><span class="lbl"></span></button>
+      <button class="choice" id="c2" type="button"><span class="key">2</span><span class="lbl"></span></button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="endings"><span>Bulunan sonlar: <b id="ecount">0</b>/4</span><div class="dots" id="dots"></div></div>
+    <button class="sound" id="snd" type="button">Ses: açık</button>
+  </footer>
+  <p class="hint">Seçmek için tıkla ya da klavyeden 1 / 2 tuşuna bas. Yazıyı hızlandırmak için metne tıkla.</p>
+  <p class="source">Risale-i Nur, Sözler, Birinci Söz'deki temsili hikayeden çocuklar için uyarlanmıştır.</p>
+</div>
+
+<script src="ses.js"></script>
+<script>
+(() => {
+const W = 160, H = 90, GROUND = 72;
+const cv = document.getElementById('scene');
+const main = cv.getContext('2d');
+let g = main;
+const OUT = '#140c18';
+
+const C = {
+  star:'#f6f2dc', starDim:'#6f7fb8', starMid:'#b9c3e8', moon:'#f3ecd2', moonSh:'#c9bf9f', halo:'#8ea3dc', haloDk:'#4a5a9a',
+  yellow:'#ffd23f', gold:'#e8a82a', goldDk:'#a8620f', goldHi:'#fff0a0', orange:'#ff8c2e', red:'#d8323c', redDk:'#8e1f33',
+  win:'#ffcf5a', winHi:'#fff3b8',
+  wood:'#7a4a2a', woodDk:'#4f2e1a', woodHi:'#9a6438',
+  stone:'#8a8aa2', stoneDk:'#56566e', stoneHi:'#b0b0c6',
+  green:'#2f8a4a', greenDk:'#1a5a30', greenHi:'#5ab85f', leaf:'#3fae55',
+  skin:'#e8a878', skinSh:'#b87a54', mouth:'#a85a4a',
+  water:'#2a6ac4', waterHi:'#8ec0f0',
+  white:'#f4f1e6', milk:'#fbfaf4', grey:'#9a9ab0', greyHi:'#d0d0e0', fog:'#e8dcc0',
+  root:'#f0e2c0', rootDk:'#c8b088', soil:'#5a3a22', soilDk:'#3e2614', soilHi:'#7a5232',
+  teal:'#2aa8a0', tealDk:'#1a7068', tealHi:'#7ae0d0', blue:'#2a5aa8', pink:'#ff9fb8', brass:'#d8a040', brassDk:'#9a6a20'
+};
+const SAND = {
+  dawn:{far:['#c88a7a','#a06a64','#e0a890'],mid:['#e0a47e','#b8785e','#f2c4a0'],flat:'#e8b48a',rip:'#f6caa2',cloud:['#f6b8a8','#ffd8c8','#c88a8a']},
+  day:{far:['#d8ac70','#b8884c','#ecc890'],mid:['#ecc07c','#c8985a','#fadca4'],flat:'#f0c886',rip:'#fde0aa',cloud:['#d8e4f4','#ffffff','#b8c8e0']},
+  dusk:{far:['#b8705a','#8a4a40','#d89070'],mid:['#d8885a','#a85e40','#eca878'],flat:'#e09464',rip:'#f2b07c',cloud:['#e08a7a','#ffc0a0','#9a4a5a']},
+  night:{far:['#3e3e6a','#2c2c50','#5a5a8a'],mid:['#4e4e7e','#383862','#6e6e9e'],flat:'#525284',rip:'#64649a',cloud:['#2a2a50','#3a3a68','#1e1e40']}
+};
+const SKY = {
+  dawn:['#2a2350','#6a3f78','#c4627a','#f2956a','#ffcf8a'],
+  day:['#3a78c8','#5a98dc','#8ac0ec','#c4e2f4','#f2ead0'],
+  dusk:['#1e1a4a','#4a2a6a','#9a3a6a','#e0644a','#f6a050'],
+  night:['#06051a','#0e1440','#1a2560','#2a3d7e']
+};
+
+/* ---------- pixel helpers ---------- */
+function R(x,y,w,h,c){g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+function P(x,y,c){R(x,y,1,1,c);}
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function ell(cx,cy,rx,ry,c){cx=Math.round(cx);cy=Math.round(cy);rx=Math.max(0,Math.round(rx));ry=Math.max(0,Math.round(ry));if(ry===0){R(cx-rx,cy,rx*2+1,1,c);return;}for(let dy=-ry;dy<=ry;dy++){const hw=Math.round(rx*Math.sqrt(Math.max(0,1-(dy*dy)/(ry*ry))));R(cx-hw,cy+dy,hw*2+1,1,c);}}
+const BAYER=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+const th=(x,y)=>(BAYER[((y%4)+4)%4][((x%4)+4)%4]+.5)/16;
+function grad(y0,y1,cols){const n=cols.length-1;for(let y=y0;y<y1;y++){const f=(y-y0)/(y1-y0)*n,i=Math.min(n-1,Math.floor(f)),fr=f-i;let run=0,cur=null;for(let x=0;x<=W;x++){const c=x<W?(fr>th(x,y)?cols[i+1]:cols[i]):null;if(c!==cur){if(cur)R(x-run,y,run,1,cur);cur=c;run=1;}else run++;}}}
+function ditherDisc(cx,cy,r,c,d){for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(dx*dx+dy*dy>r*r)continue;if(d>th(cx+dx,cy+dy))P(cx+dx,cy+dy,c);}}
+function light(cx,cy,r,c,a){g.save();g.globalCompositeOperation='lighter';[1,.68,.4].forEach((k,i)=>{g.globalAlpha=a*(i+1)/3;const rr=Math.max(1,Math.round(r*k));ell(cx,cy,rr,rr,c);});g.restore();}
+function shade(a,c='#020208'){g.globalAlpha=a;R(0,0,W,H,c);g.globalAlpha=1;}
+function shadow(cx,base,rx){g.globalAlpha=.28;ell(cx,base,rx,1,'#2a1418');g.globalAlpha=1;}
+function line(x0,y0,x1,y1,c){x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let e=dx+dy;for(;;){P(x0,y0,c);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx;}if(e2<=dx){e+=dx;y0+=sy;}}}
+function spr(rows,x,y,map,o=OUT,flip=false){
+  x=Math.round(x);y=Math.round(y);
+  const wid=Math.max(...rows.map(r=>r.length));
+  const op=(r,c)=>r>=0&&r<rows.length&&c>=0&&c<rows[r].length&&rows[r][c]!=='.'&&map[rows[r][c]];
+  const X=c=>x+(flip?wid-1-c:c);
+  if(o){for(let r=0;r<rows.length;r++)for(let c=0;c<rows[r].length;c++){if(!op(r,c))continue;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]])if(!op(r+dy,c+dx))R(X(c+dx),y+r+dy,1,1,o);}}
+  for(let r=0;r<rows.length;r++)for(let c=0;c<rows[r].length;c++)if(op(r,c))R(X(c),y+r,1,1,map[rows[r][c]]);
+}
+function shapes(list,o=OUT){
+  if(o)for(const s of list){if(s[0]==='e')ell(s[1],s[2],s[3]+1,s[4]+1,o);else R(s[1]-1,s[2]-1,s[3]+2,s[4]+2,o);}
+  for(const s of list){if(s[0]==='e')ell(s[1],s[2],s[3],s[4],s[5]);else R(s[1],s[2],s[3],s[4],s[5]);}
+}
+function bubble(x,y,t,mark){shapes([['r',x,y,15,8,C.white]]);R(x+3,y+8,2,2,C.white);P(x+2,y+10,C.white);
+  if(mark==='!'){R(x+7,y+1,1,4,OUT);P(x+7,y+6,OUT);}
+  else if(t%9>2){P(x+3,y+4,OUT);P(x+7,y+4,OUT);P(x+11,y+4,OUT);}}
+
+/* ---------- world pieces ---------- */
+const STARS=(()=>{const r=rng(7),a=[];for(let i=0;i<120;i++)a.push({x:r()*W|0,y:r()*72|0,ph:r()*6.28,b:r()<.1,d:r()<.55});return a;})();
+const inMoon=(s,m)=>m&&((s.x-m[0])**2+(s.y-m[1])**2<(m[2]+4)**2);
+function starsBg(maxY,m){for(const s of STARS){if(s.y>maxY||inMoon(s,m))continue;if(s.b){P(s.x-1,s.y,C.starDim);P(s.x+1,s.y,C.starDim);P(s.x,s.y-1,C.starDim);P(s.x,s.y+1,C.starDim);P(s.x,s.y,C.star);}else P(s.x,s.y,s.d?C.starDim:C.starMid);}}
+function starsFx(t,maxY,m){for(const s of STARS){if(s.y>maxY||inMoon(s,m))continue;const v=Math.sin(t*.3+s.ph);if(v>.8){P(s.x,s.y,C.star);if(s.b){P(s.x-2,s.y,C.starDim);P(s.x+2,s.y,C.starDim);P(s.x,s.y-2,C.starDim);P(s.x,s.y+2,C.starDim);}}}}
+function moon(x,y,r){ditherDisc(x,y,r+9,C.haloDk,.18);ditherDisc(x,y,r+5,C.halo,.28);ditherDisc(x,y,r+2,C.halo,.55);
+  ell(x,y,r,r,C.moonSh);ell(x-1,y-1,r-1,r-1,C.moon);ell(x+2,y-2,1,1,C.moonSh);P(x+3,y+2,C.moonSh);P(x-r+3,y-r+3,C.white);}
+function sun(x,y,r,kind){const hc=kind==='day'?'#fff4c8':'#ffd8a0';ditherDisc(x,y,r+9,hc,.18);ditherDisc(x,y,r+5,hc,.35);ditherDisc(x,y,r+2,hc,.6);ell(x,y,r,r,kind==='day'?'#fff0a0':'#ffd070');ell(x-1,y-1,r-2,r-2,kind==='day'?'#fffbe0':'#ffe8a8');}
+function skyFor(k,y1=GROUND){grad(0,y1,SKY[k]);}
+function cloud(x,y,w,k){const[c,hi,dk]=SAND[k].cloud;ell(x,y+1,w,2,dk);ell(x,y,w,2,c);ell(x-w*.35,y-1,w*.45,2,c);ell(x+w*.25,y-2,w*.4,2,hi);ell(x-w*.3,y-2,w*.25,1,hi);}
+function clouds(t,k,list){list.forEach(([x0,y,w],i)=>{const x=((x0+t*(.12+i*.04))%(W+50))-25;cloud(x,y,w,k);});}
+function birds(t,n,y0){for(let i=0;i<n;i++){const bx=((t*.9+i*37)%(W+20))-10,by=y0+i*5+Math.round(Math.sin(t*.4+i)*1),up=(t+i)%6<3;P(bx,by,OUT);P(bx-1,by-(up?1:0),OUT);P(bx+1,by-(up?1:0),OUT);P(bx-2,by-(up?1:-1),OUT);P(bx+2,by-(up?1:-1),OUT);}}
+function dunes(seed,base,amp,pal){const h=x=>amp*(.5+.35*Math.sin(x*.045+seed)+.15*Math.sin(x*.12+seed*3));
+  for(let x=0;x<W;x++){const v=h(x),top=Math.round(base-v),up=h(x+1)>v;R(x,top,1,H,up?pal[0]:pal[1]);P(x,top,pal[2]);if(!up&&(x+top)%3===0)P(x,top+1,pal[0]);}}
+function sandFloor(k){const s=SAND[k];R(0,GROUND,W,H-GROUND,s.flat);for(let y=GROUND+2;y<H;y+=3)for(let x=(y*7)%9;x<W;x+=9){R(x,y,4,1,s.rip);}}
+function caravan(x,y,c){for(let i=0;i<4;i++){const cx=x+i*9;R(cx,y-3,5,2,c);R(cx+1,y-4,2,1,c);R(cx+5,y-5,1,3,c);R(cx+5,y-6,2,1,c);P(cx,y-1,c);P(cx+4,y-1,c);if(i%2===0){R(cx+2,y-7,1,3,c);}}}
+function palm(x,base,h,dark){const tr=dark?'#2a1a24':'#8a6a3a',trD=dark?'#1e121a':'#6a4a2a',fr=dark?'#1e1a2a':C.green,frD=dark?'#141220':C.greenDk,frH=dark?'#2a2438':C.greenHi;
+  let tx=x;for(let i=0;i<h;i++){tx=x+Math.round(Math.sin(i*.09)*3);R(tx-1,base-i,4,1,OUT);R(tx,base-i,2,1,i%3?tr:trD);}
+  const top=base-h,cx=tx+1,F=[[-1,-.5],[1,-.5],[-1,.35],[1,.35],[-.4,-1],[.5,-1]];
+  F.forEach(([dx,dy])=>{for(let k=0;k<11;k++){const px=cx+dx*k,py=top+dy*k*.6+k*k*.06;R(px-1,py-1,3,3,OUT);}});
+  F.forEach(([dx,dy])=>{for(let k=0;k<11;k++){const px=cx+dx*k,py=top+dy*k*.6+k*k*.06;R(px,py,1,2,k%2?fr:frD);if(k%3===0)P(px,py,frH);}});
+  if(!dark){ell(cx,top+3,2,2,OUT);P(cx-1,top+3,C.orange);P(cx+1,top+4,C.goldDk);P(cx,top+2,C.orange);}}
+function tent(x,base,w,h,lit,night){const A=night?'#6a5a7a':'#efe0b8',B=night?'#3a2440':'#a8402a',Ad=night?'#4a3e5a':'#cdb88e';
+  for(let i=0;i<h;i++){const rw=Math.round(w*(.3+.7*i/h)),xx=Math.round(x+(w-rw)/2);R(xx-1,base-h+i,rw+2,1,OUT);for(let k=0;k<rw;k++){const st=Math.floor(k*6/rw)%2;P(xx+k,base-h+i,st?(k>rw*.6?Ad:A):B);}}
+  R(x-1,base,w+2,1,OUT);for(let k=0;k<w;k+=3)P(x+k,base-1,C.gold);
+  const oh=Math.round(h*.62);for(let i=0;i<oh;i++){const rw=Math.max(1,Math.round(w*.26*(i/oh)));R(Math.round(x+w/2-rw/2),base-oh+i,rw,1,lit?(i>oh*.5?C.win:C.gold):'#1a0e14');}
+  R(x+w/2,base-h-4,1,4,C.woodDk);P(x+w/2,base-h-5,C.yellow);
+  line(x-4,base,x+w*.2,base-h*.55,C.woodDk);line(x+w+3,base,x+w*.8,base-h*.55,C.woodDk);}
+function fire(x,base,t){const r=rng((t|0)*7+3);
+  [[C.redDk,6,8],[C.red,5,7],[C.orange,4,5],[C.yellow,2,3],[C.winHi,1,1]].forEach(([c,w,hm])=>{for(let i=-w;i<=w;i++){const hh=Math.round(hm*(1-Math.abs(i)/(w+1))*(.6+r()*.6));if(hh>0)R(x+i,base-hh,1,hh,c);}});
+  shapes([['r',x-6,base,13,2,C.woodDk]]);for(let i=0;i<2;i++){const a=(t+i*6)%12;P(x+Math.round((r()-.5)*6),base-9-a,a<6?C.yellow:C.orange);}}
+function rock(x,y,rx,ry,base='#a07858',hi='#c8a07a',dk='#7a5640'){shapes([['e',x,y,rx,ry,base]]);ell(x-1,y-1,Math.max(1,rx-2),Math.max(0,ry-1),hi);ell(x+2,y+1,Math.max(1,rx-2),Math.max(0,ry-1),base);P(x+rx-2,y+ry-1,dk);}
+function tentWall(){for(let x=0;x<W;x+=12){R(x,0,6,GROUND,'#8a3a2a');R(x+6,0,6,GROUND,'#d8b880');R(x+5,0,1,GROUND,'#6a2a1e');}
+  for(let i=0;i<22;i++){g.globalAlpha=.6-i*.027;R(0,i,W,1,'#1a0a08');}g.globalAlpha=1;
+  R(0,30,W,4,C.redDk);for(let x=0;x<W;x+=4){P(x,31,C.gold);P(x+2,32,C.gold);}R(0,30,W,1,C.gold);R(0,33,W,1,C.gold);}
+function rug(y){R(0,y,W,H-y,'#7a1a2a');R(0,y,W,1,C.gold);R(0,y+2,W,1,'#2a5aa8');
+  for(let x=2;x<W;x+=10){P(x,y+5,C.gold);P(x-1,y+6,C.gold);P(x+1,y+6,C.gold);P(x,y+7,C.gold);P(x+5,y+11,C.tealHi);P(x+4,y+12,C.teal);P(x+6,y+12,C.teal);}
+  R(0,H-3,W,1,'#2a5aa8');}
+function lantern(x,y,t){R(x,0,1,y,'#3a2414');shapes([['r',x-3,y,7,8,C.brass]]);R(x-2,y+2,5,4,(t%8<5)?C.win:'#ffb040');R(x,y+2,1,4,C.brassDk);R(x-4,y+8,9,1,C.brassDk);P(x,y-1,C.brass);light(x,y+4,22,C.win,.07+.02*Math.sin(t*.7));}
+
+/* ---------- characters ---------- */
+const BASE=[".....ww.....","...wwwwww...","..wwwwwwWw..","..WWWWWWWW..","..sssssssS..","..sesssesS..","..sesssesS..","..sssmsssS..","...SsssSS...","....SSS.....","..rrrrrrrr..",".hrrrrRrrrr.",".hrrrrRrrrr.","rrryyyyyyrrr","s.hrrrRrrr.s","..hrrrRrrr..","..hrrrRrrr..","..rrrRRrrr..","..rrr..rrr..","..kkk..kkk.."];
+function rowsFor(o){const r=BASE.slice();
+  if(o.beard){r[7]="..sbbbbbbS..";r[8]="...bbbbbb...";r[9]="....bbbb....";}
+  if(o.mask){r[7]="..mmmmmmmm..";r[8]="...mmmmmm...";}
+  if(o.point){r[11]=".hrrrrRrrrrrrs";r[14]="s.hrrrRrrr..";}
+  if(o.up){r[0]="s....ww....s";r[1]="r..wwwwww..r";r[2]="r.wwwwwwWw.r";r[3]="rrWWWWWWWWrr";r[14]="..hrrrRrrr..";}
+  if(o.sit)return r.slice(0,15).concat(["rrrrrrRrrrrr","kRRRRRRRRRRk"]);
+  return r;}
+const MAPS={
+  humble:{w:'#f2ece0',W:'#c8bfa8',s:C.skin,S:C.skinSh,e:OUT,m:C.mouth,r:'#3a6ab0',h:'#5a8ad0',R:'#26487a',y:C.gold,k:'#6a4a2a'},
+  proud:{w:'#2e2a40',W:'#d8a83a',s:C.skin,S:C.skinSh,e:OUT,m:C.mouth,r:'#b0452c',h:'#d0684a',R:'#7a2a1c',y:'#e8c040',k:'#3a2418'},
+  host:{w:'#e8c070',W:'#b07838',s:'#d89868',S:'#a86a44',e:OUT,m:C.mouth,b:'#3a2a24',r:'#3f7a4a',h:'#5aa06a',R:'#2a5634',y:'#f2ece0',k:'#6a4a2a'},
+  old:{w:'#f2ece0',W:'#c8bfa8',s:'#e0a074',S:'#b07a50',e:OUT,b:'#f4f4fa',r:'#8a6a3a',h:'#a88450',R:'#5e4424',y:'#c8323c',k:'#5a3a22'},
+  bandit:{w:'#2a2434',W:'#14101c',s:'#c88a5a',S:'#9a6440',e:OUT,m:'#3a3448',r:'#5a5468',h:'#76708a',R:'#3a3648',y:C.red,k:'#2a1a12'},
+  servant:{w:'#c8323c',W:C.gold,s:C.skin,S:C.skinSh,e:OUT,m:C.mouth,r:C.teal,h:C.tealHi,R:C.tealDk,y:C.yellow,k:'#6a4a2a'}
+};
+function person(kind,x,base,o={}){const rows=rowsFor(Object.assign({beard:kind==='host'||kind==='old',mask:kind==='bandit'},o));
+  if(!o.noShadow)shadow(x+6,base,6);spr(rows,x,base-rows.length,MAPS[kind],OUT,!!o.flip);}
+function scimitar(x,y,up){if(up){line(x,y,x+1,y-7,C.greyHi);line(x+1,y,x+2,y-6,'#8a8aa0');P(x+3,y-8,C.greyHi);R(x-1,y+1,4,1,C.gold);}
+  else{line(x,y,x+7,y-1,C.greyHi);line(x,y+1,x+6,y,'#8a8aa0');P(x+8,y-2,C.greyHi);R(x-1,y-1,1,4,C.gold);}}
+function gift(x,y){shapes([['r',x,y,8,7,C.red]]);R(x,y,8,1,'#ff6a70');R(x+3,y,2,7,C.yellow);R(x,y+3,8,1,C.yellow);P(x+2,y-1,C.yellow);P(x+5,y-1,C.yellow);P(x+1,y-2,C.yellow);P(x+6,y-2,C.yellow);}
+function bowl(x,y,full,w=4){shapes([['e',x,y+1,w,2,'#c8a070']]);R(x-w+1,y,w*2-1,1,full?C.milk:'#8a6a4a');P(x-w+1,y+2,'#e8c890');}
+
+const CAMEL=["....................hhh...","...................hhhhh..","...................hhehhn.","........ccc........hhhhh..","......ccccccc.......hhh...",".....ccccccccc.....hhh....","....cccccccccccc..hhh.....","...pppppppppppcccchh......","..pqpqpqpqpqppccccc.......",".tcccccccccccccccccc......","t..cCccccccccccccCc.......","...cCcccccccccccCc........","....cc.cc.....cc.cc.......","....cc.cc.....cc.cc.......","....cC.cC.....cC.cC.......","....cc.cc.....cc.cc.......","....cc.cc.....cc.cc.......","...kkk.kkk...kkk.kkk......"];
+const CAMEL_REST=CAMEL.slice(0,10).concat(["..kCccccccccccccccCk......"]);
+const CAMELM={c:'#c89a5a',C:'#9a7040',h:'#d4a868',e:OUT,n:'#6a4a2a',p:'#b0452c',q:'#e8c040',t:'#9a7040',k:'#5a3a22'};
+const COW=[".h..h.................",".hwwh.................","wwwwww................","wewwww.wwwwbbbwwwwww..","wwwwwwwwwwbbbbbwwwbbw.","ppwwwwwwwwwbbbwwwbbbww","pp.wwwwwwwwwbwwwwwbwwt","...wwwwwwwwwwwwwwwwwwt","...SwwwwwwwwwwwwwwwS.t","....SSwwwwwuuwwwwSS...","....ww.ww.....ww.ww...","....ww.ww.....ww.ww...","....ww.ww.....ww.ww...","....kk.kk.....kk.kk..."];
+const COWM={h:'#e8dcc0',w:'#f2f0ea',b:'#2a2a30',e:OUT,p:C.pink,S:'#c8c4cc',u:C.pink,t:'#5a5060',k:'#3a3040'};
+const SHEEP=["....wwWwww....","..wwwwwwwwWw..",".fwwwwwwwwwwWw","fffwwwwwwwwwww","efffwwwwwwwwwW","fff.wwwwwwwwWW","....wwwwwwwwW.","....WWWWWWWW..","....f.f...f.f.","....f.f...f.f.","....k.k...k.k."];
+const SHEEPM={w:'#f2eee4',W:'#cac4b8',f:'#3a3040',e:'#f4f4f4',k:OUT};
+const HEART=[".pp.pp.","pPppppp","ppppppp",".ppppp.","..ppp..","...p..."];
+function camel(x,base,o={}){const rows=o.rest?CAMEL_REST:CAMEL;shadow(x+12,base,11);spr(rows,x,base-rows.length,CAMELM,OUT,!!o.flip);}
+
+/* ---------- scenes: bg = cached still layer, fx = animated layer ---------- */
+const SCENES={
+  desert:{
+    bg(m){const k=m==='start'?'dawn':m==='alone'?'night':'dusk';skyFor(k);
+      if(k==='dawn')sun(36,60,9,'dawn');if(k==='dusk')sun(118,60,12,'dusk');
+      if(k==='night'){starsBg(50,[128,16,7]);moon(128,16,7);}
+      dunes(1,60,8,SAND[k].far);
+      if(m==='start')caravan(98,56,'#8a5a5a');
+      if(m==='arrive'){[[118,56],[130,54],[146,57]].forEach(([x,y],i)=>{ell(x,y,4+i%2,4+i%2,'#3a2040');R(x-5,y,10+(i%2)*2,8,'#3a2040');P(x,y-5-(i%2),'#3a2040');P(x-1,y+3,C.win);P(x+2,y+5,C.win);});palm(108,60,16,true);palm(152,60,14,true);}
+      dunes(4,69,6,SAND[k].mid);sandFloor(k);
+      if(m==='start'){rock(22,71,10,4);palm(152,GROUND,32,false);rock(140,86,6,3);}
+      if(m==='arrive')for(let i=0;i<12;i++)P(6+i*5,GROUND+8+(i%2)*2,SAND.dusk.mid[1]);
+      if(m==='alone')[[30,76],[124,80]].forEach(([x,y])=>rock(x,y,6,3,'#4a4a6a','#64648a','#33334e'));
+    },
+    fx(t,m){
+      if(m==='start'){clouds(t,'dawn',[[20,14,12],[100,22,9]]);birds(t,2,26);
+        person('old',14,70,{sit:true});line(28,49,26,71,C.woodDk);P(28,48,C.woodHi);
+        camel(110,GROUND);person('humble',60,GROUND);person('proud',78,GROUND,{flip:true});}
+      if(m==='alone'){starsFx(t,50,[128,16,7]);
+        for(let i=0;i<5;i++){const x=((t*3+i*40)%(W+30))-15;g.globalAlpha=.35;R(x,58+i*5,12,1,C.fog);g.globalAlpha=1;}
+        person('proud',72+(t%2),GROUND);if(t%10<6){g.globalAlpha=.6;P(84,58,C.greyHi);P(85,57,C.greyHi);P(86,57,C.greyHi);g.globalAlpha=1;}}
+      if(m==='arrive'){clouds(t,'dusk',[[40,18,14],[90,10,10]]);birds(t,3,20);light(130,56,20,C.win,.05);
+        person('humble',52,GROUND);camel(68,GROUND);}
+    }
+  },
+  bandits:{
+    bg(m){skyFor('day');sun(132,14,7,'day');dunes(2,58,9,SAND.day.far);
+      if(m==='flee'){tent(10,58,16,10,false);tent(28,59,12,7,false);}
+      dunes(5,69,7,SAND.day.mid);sandFloor('day');rock(70,80,5,2);rock(152,76,7,3);},
+    fx(t,m){clouds(t,'day',[[30,12,12],[110,26,9]]);
+      const hero=m==='proud'?'proud':'humble';
+      if(m==='meet'||m==='proud'){const up=t%10<5;
+        [[88,GROUND],[104,GROUND-2],[120,GROUND]].forEach(([x,b],i)=>{person('bandit',x,b,{flip:true});scimitar(x-1,b-7,(up+i)%2===0);});
+        person(hero,34,GROUND);if(m==='proud'&&t%6<3){P(46,54,C.waterHi);P(46,55,C.waterHi);}}
+      if(m==='flee'){[[0,GROUND],[15,GROUND-1],[29,GROUND]].forEach(([dx,b],i)=>{const x=100+dx+((t*1.2)%44);if(x<W+4){person('bandit',x,b+((t+i)%4<2?0:-1));g.globalAlpha=.5;ell(x-2,b,3,1,SAND.day.rip);g.globalAlpha=1;}});
+        person('humble',36,GROUND);}
+      if(m==='laugh'){[[88,GROUND],[104,GROUND],[120,GROUND]].forEach(([x,b],i)=>{const bob=(t+i*2)%6<3?0:-1;person('bandit',x,b+bob,{flip:true});});
+        const by=56+((t%6<3)?0:-1);shapes([['e',112,by,4,4,'#8a6a3a']]);R(110,by-5,4,2,'#5a3a22');P(111,by-1,'#a88450');
+        if(t%8<5){[[92,42],[108,40],[124,42]].forEach(([x,y])=>{R(x,y,1,3,C.white);R(x+2,y,1,3,C.white);P(x+1,y+1,C.white);R(x+4,y+1,2,2,C.white);});}
+        person('humble',34,GROUND);P(46,52,C.waterHi);P(46,53,C.waterHi);}
+    }
+  },
+  tent:{
+    bg(m){
+      if(m==='welcome'){tentWall();R(78,0,3,GROUND,C.woodDk);R(78,0,1,GROUND,C.woodHi);rug(GROUND);
+        shapes([['e',30,76,11,4,'#2a5aa8'],['e',122,76,11,4,'#3f7a4a']]);ell(28,75,8,2,'#4a7ad0');ell(120,75,8,2,'#5aa06a');
+        [[19,78],[41,78],[111,78],[133,78]].forEach(([x,y])=>P(x,y,C.gold));
+        shapes([['e',80,82,18,4,C.brass]]);ell(80,81,16,3,'#f0c060');R(64,82,32,1,C.brassDk);
+      } else {
+        const night=m==='night',k=night?'night':'dusk';skyFor(k);
+        if(night){starsBg(46,[30,14,6]);moon(30,14,6);}else sun(30,58,10,'dusk');
+        dunes(3,60,8,SAND[k].far);dunes(6,69,5,SAND[k].mid);sandFloor(k);
+        if(night)tent(104,GROUND,54,32,true,true);else{tent(86,GROUND,64,36,true,false);palm(16,GROUND,30,false);}
+      }
+    },
+    fx(t,m){
+      if(m==='welcome'){lantern(54,10,t);
+        shapes([['e',74,78,3,2,C.brass],['r',72,74,5,4,C.brass]]);R(77,75,2,1,C.brass);P(72,73,C.brassDk);
+        bowl(86,78,true,2);bowl(92,79,true,2);[[64,80],[66,79],[68,80]].forEach(([x,y])=>P(x,y,'#5a2a12'));
+        if(t%10<6){g.globalAlpha=.5;P(74,71-(t%5),C.greyHi);P(75,69-(t%5),C.greyHi);g.globalAlpha=1;}
+        person('humble',24,78,{sit:true,noShadow:true});person('host',116,78,{sit:true,flip:true,noShadow:true});}
+      if(m==='beg'){clouds(t,'dusk',[[60,16,12]]);light(118,58,16,C.win,.07);person('host',112,GROUND,{flip:true});person('humble',86,GROUND,{point:true});}
+      if(m==='night'){starsFx(t,46,[30,14,6]);light(131,60,12,C.win,.06);fire(72,GROUND+2,t);light(72,64,24,C.orange,.07+.02*Math.sin(t*.9));
+        camel(2,GROUND,{rest:true});person('humble',48,GROUND+2,{sit:true});person('host',84,GROUND+2,{sit:true,flip:true});}
+    }
+  },
+  oasis:{
+    bg(){skyFor('day');sun(26,14,6,'day');dunes(7,60,7,SAND.day.far);
+      ell(80,66,80,6,'#5aa06a');dunes(9,70,4,SAND.day.mid);sandFloor('day');
+      shapes([['e',26,79,22,4,C.water]]);ell(26,78,18,2,'#4a8ad8');R(14,78,8,1,C.waterHi);R(28,80,5,1,C.waterHi);
+      for(let x=6;x<48;x+=3){const h=2+(x%4);R(x,74-h+(x%3),1,h,x%2?C.green:C.greenDk);if(x%6===0)R(x,73-h,1,2,'#8a5a2a');}
+      palm(8,GROUND,34,false);palm(154,GROUND,30,false);
+      R(82,GROUND+1,44,17,OUT);R(83,GROUND+2,42,16,C.soil);const r=rng(3);for(let i=0;i<34;i++)P(84+r()*40|0,GROUND+3+r()*14|0,i%2?C.soilDk:C.soilHi);
+      line(104,GROUND+2,104,GROUND+9,C.rootDk);line(104,GROUND+11,96,GROUND+16,C.root);line(104,GROUND+11,113,GROUND+16,C.root);line(104,GROUND+11,105,GROUND+17,C.rootDk);line(104,GROUND+11,90,GROUND+13,C.rootDk);
+      shapes([['r',101,38,6,GROUND-38,'#6a4a2a']]);R(101,38,2,GROUND-38,'#8a6a3a');R(106,38,1,GROUND-38,'#4a3020');line(103,52,96,46,'#6a4a2a');
+      shapes([['e',104,30,24,14,C.green],['e',88,38,10,7,C.green],['e',120,38,10,7,C.green]]);
+      ell(102,27,20,10,C.leaf);ell(96,23,11,5,C.greenHi);ell(106,40,18,3,C.greenDk);ell(90,36,6,3,C.leaf);ell(118,36,6,3,C.leaf);
+      [[90,28],[98,22],[110,26],[118,34],[94,38],[106,34],[84,36],[124,30],[102,30],[114,40]].forEach(([x,y])=>{shapes([['e',x,y,1,1,C.red]]);P(x-1,y-1,'#ff9a9a');});
+    },
+    fx(t,m){clouds(t,'day',[[50,10,10],[130,20,8]]);birds(t,2,16);
+      light(104,GROUND+11,7,C.yellow,.16+.06*Math.sin(t*.5));shapes([['e',104,GROUND+11,2,1,C.gold]]);P(103,GROUND+10,C.winHi);
+      const s=(t%20);if(s<4){P(98,22-s,C.white);P(97,23-s,C.white);}if(t%12<3)R(18,78,3,1,C.white);
+      person('humble',38,GROUND);person('host',58,GROUND,{point:true});
+      if(m==='think')bubble(56,36,t);}
+  },
+  roots:{
+    bg(){grad(0,30,['#f6a050','#ffc070','#ffe0a0']);sun(136,8,6,'day');
+      for(let i=0;i<6;i++){const a=i*1.05+.3;line(136+Math.cos(a)*10,8+Math.sin(a)*10,136+Math.cos(a)*15,8+Math.sin(a)*15,'#fff4c8');}
+      grad(30,H,['#7a5232','#5a3a22','#46301c','#36220f']);R(0,30,W,2,'#9a6a3a');for(let x=0;x<W;x+=3)P(x,29,'#c89a5a');
+      const r=rng(12);for(let i=0;i<120;i++)P(r()*W|0,33+(r()*56|0),r()<.5?C.soilDk:C.soilHi);
+      ROCKS.forEach(([x,y,rx,ry])=>{shapes([['e',x,y,rx,ry,C.stoneDk]]);ell(x-1,y-1,rx-2,ry-2,C.stone);ell(x-3,y-3,rx-6,Math.max(1,ry-5),C.stoneHi);});
+      ROOTS.forEach(path=>{for(let i=0;i<path.length-1;i++){line(path[i][0]+1,path[i][1],path[i+1][0]+1,path[i+1][1],C.rootDk);line(path[i][0],path[i][1],path[i+1][0],path[i+1][1],C.root);}});
+      ROCKS.forEach(([x,y,rx,ry])=>{line(x-2,y-ry+1,x-4,y-1,OUT);line(x-4,y-1,x-2,y+2,OUT);line(x+1,y+ry-1,x+3,y+2,OUT);});
+      shapes([['r',79,10,2,21,C.green]]);
+      [[72,14,-1],[88,18,1],[70,22,-1],[90,24,1],[74,7,-1],[86,7,1]].forEach(([x,y,d])=>{shapes([['e',x,y,6,2,C.leaf]]);R(x-4,y-1,7,1,C.greenHi);line(x-d*5,y,80,y+2,C.greenDk);});
+      shapes([['e',80,3,2,2,'#ffd23f']]);P(79,2,C.goldHi);
+    },
+    fx(t){ROOTS.forEach((p,i)=>{const e=p[p.length-1];light(e[0],e[1],4,C.root,.12+.06*Math.sin(t*.5+i));});
+      if(t%12<6)for(let i=0;i<3;i++){g.globalAlpha=.4;R(40+i*30,26-((t+i*4)%6),6,1,'#fff4c8');g.globalAlpha=1;}
+      const wx=20+((t*.5)%30);for(let i=0;i<6;i++)P(wx+i,64+Math.round(Math.sin(i+t*.6)),i===5?C.mouth:C.pink);
+      const ax=140-((t*.8)%40);P(ax,40,OUT);P(ax+1,40,OUT);P(ax+2,39,OUT);P(ax,41,OUT);P(ax+2,41,OUT);}
+  },
+  animals:{
+    bg(){skyFor('day');sun(140,12,6,'day');dunes(3,58,7,SAND.day.far);
+      ell(80,70,90,10,'#5aa06a');R(0,GROUND,W,H,'#4a9a5a');for(let i=0;i<70;i++){const r=rng(i+40);P(r()*W|0,GROUND+r()*18|0,i%2?'#6ab86a':'#3a8048');}
+      for(let x=4;x<W;x+=7){P(x,GROUND+1+(x%3),'#7ac87a');P(x+1,GROUND+(x%3),'#7ac87a');}
+      palm(152,GROUND,32,false);
+      [[30,84,C.white],[60,86,C.yellow],[100,84,C.pink],[140,86,C.white]].forEach(([x,y,c])=>{P(x,y,c);P(x-1,y,c);P(x,y+1,'#3a8048');});
+    },
+    fx(t){clouds(t,'day',[[30,12,12],[90,22,9]]);birds(t,2,18);const b=(t%16<8)?0:1;
+      shadow(18,GROUND,10);spr(COW,6,GROUND-14,COWM);if(t%24<3)P(7,GROUND-11,'#f2f0ea');
+      shadow(39,GROUND,6);spr(SHEEP,32,GROUND-11+b,SHEEPM);
+      bowl(80,GROUND-2,true,4);light(80,GROUND-2,6,C.milk,.08);if(t%10<3)P(78,GROUND-3,C.white);
+      person('humble',58,GROUND);person('host',90,GROUND,{flip:true});camel(118,GROUND,{flip:true});}
+  },
+  palace:{
+    bg(){skyFor('day');sun(22,12,6,'day');dunes(5,62,6,SAND.day.far);sandFloor('day');
+      shapes([['r',30,34,100,38,'#f0dcb0']]);for(let y=40;y<72;y+=5)for(let x=30+((y/5)%2)*5;x<130;x+=10)R(x,y,1,4,'#dcc494');
+      for(let x=30;x<130;x+=6)shapes([['r',x,30,3,3,'#f0dcb0']]);
+      R(30,38,100,3,C.tealDk);for(let x=30;x<130;x+=4){P(x+1,39,C.tealHi);P(x+3,38,C.gold);P(x+3,40,C.gold);}
+      [[16,18],[128,18]].forEach(([x,y])=>{shapes([['r',x,y,16,54,'#e8d0a0']]);for(let yy=y+6;yy<72;yy+=6)R(x,yy,16,1,'#d4bc8a');
+        shapes([['e',x+8,y,9,7,C.teal]]);R(x,y,16,1,OUT);ell(x+6,y-3,4,2,C.tealHi);R(x+8,y-12,1,5,C.goldDk);P(x+8,y-13,C.gold);
+        shapes([['r',x+5,y+14,6,8,C.blue]]);ell(x+8,y+14,3,2,C.blue);R(x+7,y+14,2,8,'#1a3a78');R(x+2,y+30,12,2,C.tealDk);});
+      shapes([['e',80,32,22,14,C.gold]]);R(58,33,45,14,'#f0dcb0');R(58,32,45,1,OUT);ell(80,28,19,10,'#f0c040');ell(75,25,9,5,C.goldHi);R(80,14,1,5,C.goldDk);P(80,13,C.gold);
+      shapes([['r',64,44,32,28,'#2a1810']]);ell(80,44,16,10,'#2a1810');R(65,44,30,1,'#2a1810');
+      for(let a=0;a<=Math.PI;a+=.08){P(80+Math.cos(a)*17,44-Math.sin(a)*11,C.gold);}R(63,44,1,28,C.gold);R(96,44,1,28,C.gold);
+      R(67,48,12,24,C.woodDk);R(81,48,12,24,C.woodDk);R(79,48,2,24,'#2a1810');for(let y=50;y<72;y+=4){P(69,y,C.gold);P(77,y,C.gold);P(83,y,C.gold);P(91,y,C.gold);}
+      [[40,46],[108,46]].forEach(([x,y])=>{shapes([['r',x,y,10,12,C.blue]]);ell(x+5,y,5,3,C.blue);R(x+4,y,2,12,'#1a3a78');R(x-1,y+12,12,2,'#dcc494');});
+      palm(8,GROUND,26,false);palm(152,GROUND,26,false);
+      for(let i=0;i<9;i++){R(60-i*2,GROUND+1+i*2,40+i*4,1,'#e0c898');}
+    },
+    fx(t,m){clouds(t,'day',[[50,8,10],[120,16,8]]);const f=t%8<4;[[24,4],[136,4]].forEach(([x,y])=>{R(x,y,6,3,C.red);if(f)P(x+6,y+1,C.red);else P(x+6,y,C.red);P(x+2,y+1,C.yellow);});
+      person('humble',42,GROUND+2);person('servant',88,GROUND+2,{flip:true});gift(82,61);
+      if(m==='servant')bubble(98,38,t,'!');}
+  },
+  sofra:{
+    bg(){tentWall();R(0,GROUND-8,W,H,'#7a1a2a');R(0,GROUND-8,W,1,C.gold);
+      shapes([['e',22,72,12,5,'#2a5aa8'],['e',138,72,12,5,'#3f7a4a']]);
+      shapes([['e',80,84,64,9,'#f4ead0']]);ell(80,84,60,7,'#fbf4e0');for(let a=0;a<6.28;a+=.15){P(80+Math.cos(a)*62,84+Math.sin(a)*8,C.red);}
+    },
+    fx(t,m){lantern(80,8,t);
+      person('humble',16,74,{sit:true,noShadow:true});person('host',132,74,{sit:true,flip:true,noShadow:true});
+      const full=m!=='full';
+      shapes([['e',48,82,8,3,'#c88a40']]);ell(48,81,7,2,'#e8b060');for(let i=-4;i<=4;i+=4)line(48+i-1,80,48+i+1,82,'#a86a2a');
+      shapes([['e',62,86,6,2,'#d0d0d8']]);if(full)[[59,85],[61,86],[63,85],[65,86],[62,84]].forEach(([x,y])=>{P(x,y,'#5a2a12');P(x,y-1,'#8a4a22');});
+      shapes([['e',80,82,8,4,'#8a4a2a']]);ell(80,80,6,1,full?'#e0a050':'#5a3a22');R(72,82,16,1,'#6a3a1a');
+      if(full&&t%10<7){g.globalAlpha=.5;P(78,74-(t%4),C.greyHi);P(81,72-((t+2)%4),C.greyHi);P(83,75-((t+1)%4),C.greyHi);g.globalAlpha=1;}
+      shapes([['r',100,74,6,9,C.milk],['r',106,76,2,4,C.milk]]);R(100,74,6,1,'#d8d4c8');P(99,75,C.milk);R(104,76,1,6,'#d8d4c8');
+      bowl(114,84,full,3);
+      if(m==='think')bubble(118,40,t);
+      if(m==='full')spr(HEART,40,44-(t%8<4?1:0),{p:C.pink,P:'#ffd0e0'});}
+  }
+};
+const ROCKS=[[50,50,14,7],[112,58,16,8],[34,76,12,6],[128,80,14,6]];
+const ROOTS=[[[80,31],[76,40],[66,46],[52,50],[42,54]],[[80,31],[86,42],[100,52],[112,58],[124,62]],[[80,31],[80,48],[76,62],[66,72],[50,78],[36,78]],[[80,31],[84,56],[96,70],[114,80],[130,82]]];
+
+/* ---------- vignette ---------- */
+const vig=document.createElement('canvas');vig.width=W;vig.height=H;
+g=vig.getContext('2d');
+for(let y=0;y<H;y++)for(let x=0;x<W;x++){const dx=(x-W/2)/(W/2),dy=(y-H/2)/(H/2),v=(dx*dx*.8+dy*dy*1.1-.9)/.7;if(v>th(x,y))P(x,y,'#05040c');}
+g=main;
+
+/* ---------- story ---------- */
+const STORY={
+  start:{scene:'desert',mode:'start',place:'Çölün kenarı',
+    text:"İki yolcu kocaman bir çölü geçecek. Biri alçakgönüllü, öteki kibirli. Yaşlı bir dede onlara seslendi: \"Bu çölde yol kesen haydutlar var, su ve yiyecek bulmak da zor. Ama çölün bir reisi var. Onun adını alan güvende olur.\"",
+    c:[["Reisin adını al","named"],["Gerek yok, kendi gücüm yeter","proud"]]},
+  proud:{scene:'bandits',mode:'proud',place:'Kum tepeleri',
+    text:"Reisin adını almadan yola çıktın. Biraz sonra kum tepesinin ardından haydutlar çıktı! Kimse seni tanımıyor, kimse sana yardım etmiyor. Dizlerin titremeye başladı.",
+    c:[["Korkup kaç","end_tremble"],["Geri dön, reisin adını al","named"]]},
+  named:{scene:'bandits',mode:'meet',place:'Kum tepeleri',
+    text:"Reisin adını aldın ve yola çıktın. Biraz sonra kum tepesinin ardından haydutlar çıktı! Yüzleri hiç de dostça değil.",
+    c:[["\"Ben reisin adıyla geziyorum!\" de","safe"],["Kendi adınla bağır, onları korkut","end_shout"]]},
+  safe:{scene:'bandits',mode:'flee',place:'Kum tepeleri',
+    text:"Reisin adını duyan haydutlar birbirine baktı ve hemen geri çekildi. Sana dokunamadılar bile! Akşam olunca uzakta çadırlar gördün.",
+    c:[["Çadıra git, reisin adını söyle","tent"],["Çadıra git, yiyecek dilen","beg"]]},
+  beg:{scene:'tent',mode:'beg',place:'Çadırlar',
+    text:"Çadırdakiler seni tanımadı. Kapıdan bir parça ekmek uzattılar ama içeri çağırmadılar. Karnın hâlâ aç, hava da soğumaya başladı.",
+    c:[["Reisin adını hatırla ve söyle","tent"],["Yine kendi başına devam et","end_tremble"]]},
+  tent:{scene:'tent',mode:'welcome',place:'Çadırın içi',
+    text:"\"Reisin adıyla mı geldin? Hoş geldin!\" Ev sahibi seni sıcak çadırına aldı, önüne süt ve hurma koydu. Sonra gülümseyerek sordu: \"Bu çöl neye benziyor, biliyor musun?\"",
+    c:[["Bilmiyorum, anlatır mısın?","world"],["Sadece kum ve güneşe","world_think"]]},
+  world_think:{scene:'tent',mode:'welcome',place:'Çadırın içi',
+    text:"Ev sahibi güldü: \"Dışarıdan öyle görünüyor. Ama biraz daha dikkatli bakarsan, bu çölün sana çok şey anlattığını görürsün.\"",
+    c:[["Dikkatle dinle","world"],["Önce bir hurma ye, sonra dinle","world"]]},
+  world:{scene:'tent',mode:'night',place:'Yıldızlı gece',
+    text:"\"Bu çöl dünyaya benzer, biz de onun yolcularıyız,\" dedi ev sahibi. \"Hepimiz küçüğüz, ihtiyacımız çok. Bu dünyanın asıl Sahibi Allah'tır. Bismillah demek, O'nun adını alıp O'nun adıyla yola çıkmaktır. O zaman hiçbir şeyden korkmayız.\"",
+    c:[["Her şey Bismillah der mi?","oasis"],["Bana göster","oasis"]]},
+  oasis:{scene:'oasis',mode:'seed',place:'Vaha',
+    text:"Sabah ev sahibi seni vahaya götürdü. \"Şu minicik çekirdeğe bak. Koca bir ağacı sırtında taşıyor! Ağaç da dallarını meyveyle doldurup bize uzatıyor.\" Sence ağaç bunu kendi gücüyle mi yapıyor?",
+    c:[["Hayır, Allah'ın adıyla yapıyor","roots"],["Evet, ağaç çok güçlü","tree_think"]]},
+  tree_think:{scene:'oasis',mode:'think',place:'Vaha',
+    text:"\"Çekirdek o kadar küçük ki, kendi gücüyle bir taşı bile kaldıramaz,\" dedi ev sahibi. \"Ama koca ağacı taşıyor. Demek ki o da Bismillah diyor, Allah'ın adıyla çalışıyor.\"",
+    c:[["Şimdi anladım!","roots"],["Başka örnek var mı?","roots"]]},
+  roots:{scene:'roots',place:'Toprağın altı',
+    text:"\"Şimdi toprağın altına bak. İpek gibi yumuşacık kökler sert taşları delip geçiyor, tıpkı Hz. Musa'nın asasının taşı yarması gibi. İncecik yapraklar da kavurucu sıcakta yanmadan yemyeşil kalıyor, tıpkı ateşin Hz. İbrahim'i yakmaması gibi. Çünkü onlar da Allah'ın adıyla çalışıyor.\"",
+    c:[["Hayvanlar da Bismillah der mi?","animals"],["Ya bize gelen süt?","animals"]]},
+  animals:{scene:'animals',place:'Otlak',
+    text:"\"İnek, koyun, keçi ve deve de Bismillah der. Allah'ın verdiği tertemiz sütü bize getirirler. Her bahçe de kocaman bir mutfak gibidir. İçinde çeşit çeşit yiyecek pişer, bize ikram edilir.\"",
+    c:[["Bunları bize kim gönderiyor?","gift"],["Hayvanlara teşekkür edeyim","gift"]]},
+  gift:{scene:'palace',mode:'gift',place:'Sarayın kapısı',
+    text:"Ev sahibi bir örnek verdi: \"Diyelim ki padişah sana çok güzel bir hediye gönderdi. Hediyeyi bir hizmetçi getirdi. Sen ne yaparsın?\"",
+    c:[["Hizmetçinin ayağını öper, padişahı unuturum","end_servant"],["Hizmetçiye teşekkür eder, hediyeyi göndereni hatırlarım","price"]]},
+  price:{scene:'sofra',mode:'meal',place:'Sofra',
+    text:"\"Doğru!\" dedi ev sahibi. \"Ağaç, inek, insanlar... Hepsi Allah'ın hediyelerini bize getirir. Asıl Sahibi bizden üç şey ister: Başlarken Bismillah demek, bitince Elhamdülillah demek, arada da bunların Allah'ın hediyesi olduğunu düşünmek.\" Önünde sıcak bir sofra var. Nasıl başlarsın?",
+    c:[["Bismillah diyerek","meal"],["Hiçbir şey demeden","meal_think"]]},
+  meal_think:{scene:'sofra',mode:'think',place:'Sofra',
+    text:"Ev sahibi yavaşça hatırlattı: \"Unutma, Bismillah her hayrın başıdır. Biz de her işe onunla başlarız.\"",
+    c:[["Bismillah","meal"],["Bismillahirrahmanirrahim","meal"]]},
+  meal:{scene:'sofra',mode:'full',place:'Sofra',
+    text:"Yemeğini afiyetle yedin. Karnın doydu, için ısındı. Bu güzel yemeğin bir hediye olduğunu düşündün. Peki bitirince ne dersin?",
+    c:[["Elhamdülillah","end_best"],["Hiçbir şey demeden kalkarım","thanks_think"]]},
+  thanks_think:{scene:'sofra',mode:'think',place:'Sofra',
+    text:"Ev sahibi gülümsedi: \"Başta Bismillah dedin, ne güzel. Sonunda da hediyeyi gönderene teşekkür edelim.\"",
+    c:[["Elhamdülillah","end_best"],["Çok şükür, Elhamdülillah","end_best"]]},
+
+  end_tremble:{scene:'desert',mode:'alone',place:'Gece, çölün ortası',end:true,title:'SON: Titreyen Yolcu',
+    text:"Reisin adı olmadan çölde tek başına kaldın. Her seste korkuyla titriyorsun, her çadırın kapısında yiyecek istiyorsun. Çölde tek başına ne kadar küçük ve güçsüz olduğunu unutmuştun."},
+  end_shout:{scene:'bandits',mode:'laugh',place:'Kum tepeleri',end:true,title:'SON: Kendi Adıyla Bağıran',
+    text:"Haydutlar senin bağırışına kahkahayla güldü ve heybeni alıp gittiler. Yolcunun gücü kendi sesinde değildi. Gücü, adını aldığı reisteydi."},
+  end_servant:{scene:'palace',mode:'servant',place:'Sarayın kapısı',end:true,title:'SON: Hizmetçiyi Öven',
+    text:"Hizmetçi şaşırdı: \"Ben sadece getirdim, hediye padişahın!\" Hediyeyi getireni övüp göndereni unutmak çok tuhaf olurdu, değil mi? Nimetleri getirenlere teşekkür et ama asıl Sahibini hiç unutma."},
+  end_best:{scene:'desert',mode:'arrive',place:'Yolun sonu',end:true,best:true,title:'SON: Bismillah ile Başla, Elhamdülillah ile Bitir',
+    text:"Ertesi gün çölü güvenle geçtin. Artık sırrı biliyorsun: Bütün varlıklar gibi sen de işine Allah'ın adıyla başlıyorsun. Allah adına ver, Allah adına al. Allah adına başla, Allah adına çalış."}
+};
+const ENDINGS=['end_tremble','end_shout','end_servant','end_best'];
+
+/* ---------- engine ---------- */
+const $=id=>document.getElementById(id);
+const textEl=$('text'),srEl=$('sr'),placeEl=$('place'),etitle=$('etitle'),b1=$('c1'),b2=$('c2'),dotsEl=$('dots'),countEl=$('ecount'),sndBtn=$('snd');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let node='start',hist=[],tick=10,typer=null;
+const cache=new Map();
+
+function load(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+let found=load('bismillah-yolculuk-sonlar',[]);if(!Array.isArray(found))found=[];
+let soundOn=load('bismillah-yolculuk-ses',true)!==false;SES.setOn(soundOn);
+
+function beep(f,d=.08){if(soundOn)SES.beep(f,d);}
+function jingle(good){if(soundOn)SES.jingle(good);}
+
+function renderDots(){dotsEl.innerHTML='';ENDINGS.forEach(id=>{const d=document.createElement('span');const on=found.includes(id);d.className='dot'+(on?' on':'');d.title=on?STORY[id].title.replace('SON: ',''):'???';dotsEl.appendChild(d);});countEl.textContent=found.length;}
+function renderSound(){sndBtn.textContent='Ses: '+(soundOn?'açık':'kapalı');sndBtn.setAttribute('aria-pressed',String(soundOn));}
+
+function draw(){
+  const n=STORY[node],sc=SCENES[n.scene],key=n.scene+':'+(n.mode||'');
+  let bg=cache.get(key);
+  if(!bg){bg=document.createElement('canvas');bg.width=W;bg.height=H;g=bg.getContext('2d');sc.bg(n.mode);cache.set(key,bg);}
+  g=main;main.clearRect(0,0,W,H);main.drawImage(bg,0,0);sc.fx(tick,n.mode);main.drawImage(vig,0,0);
+}
+
+function type(s){clearInterval(typer);srEl.textContent=s;if(reduce){textEl.textContent=s;return;}let i=0;textEl.textContent='';typer=setInterval(()=>{i+=2;textEl.textContent=s.slice(0,i);if(i>=s.length)clearInterval(typer);},26);}
+
+/* sounds: ambient per scene, effects per story node (see ses.js) */
+const SOUND={"amb":{"desert:start":"wind","desert:alone":"windNight","desert:arrive":"quiet","bandits":"wind","tent:beg":"wind","tent:welcome":"fire","tent:night":"crickets","oasis":"water","roots":"quiet","animals":"birds","palace":"birds","sofra":"fire"},"fx":{"proud":"hooves","named":"hooves","safe":"run","end_shout":"laugh","gift":"door","end_servant":"door","price":"plates","meal":"plates"}};
+function show(){
+  const n=STORY[node];SES.scene(SOUND,node,n);
+  placeEl.textContent=n.place;
+  cv.setAttribute('aria-label','Sahne: '+n.place);
+  etitle.hidden=!n.end;
+  if(n.end){etitle.textContent=(n.best?'★ ':'')+n.title;if(!found.includes(node)){found.push(node);save('bismillah-yolculuk-sonlar',found);}renderDots();}
+  const ch=n.end?[["Baştan başla","__restart"],["Son seçime geri dön","__back"]]:n.c;
+  [b1,b2].forEach((b,i)=>{b.querySelector('.lbl').textContent=ch[i][0];b.dataset.to=ch[i][1];});
+  type(n.text);draw();
+}
+
+function choose(b){
+  const to=b.dataset.to;
+  if(to==='__restart'){hist=[];node='start';beep(440);}
+  else if(to==='__back'){node=hist.pop()||'start';beep(440);}
+  else{hist.push(node);node=to;const n=STORY[to];if(n.end)jingle(!!n.best);else beep(b===b1?660:880);}
+  show();
+}
+b1.addEventListener('click',()=>choose(b1));
+b2.addEventListener('click',()=>choose(b2));
+textEl.addEventListener('click',()=>{clearInterval(typer);textEl.textContent=STORY[node].text;});
+document.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;if(e.key==='1'){e.preventDefault();choose(b1);}else if(e.key==='2'){e.preventDefault();choose(b2);}});
+sndBtn.addEventListener('click',()=>{soundOn=!soundOn;SES.setOn(soundOn);save('bismillah-yolculuk-ses',soundOn);renderSound();beep(700);});
+
+window.claude?.hot?.snapshot?.(()=>({node,hist}));
+function start(d){if(d&&d.node&&STORY[d.node]){node=d.node;hist=Array.isArray(d.hist)?d.hist:[];}renderDots();renderSound();show();
+  if(!reduce)setInterval(()=>{tick++;draw();},110);}
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+})();
+</script>
+
+</body>
+</html>
