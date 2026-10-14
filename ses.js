@@ -82,8 +82,8 @@
     };
   }
   function wind(out, nodes, level, base) {
-    const b = bed(out, 'bandpass', base, 0.9, 0.13 * level);
-    nodes.push(b.s, lfo(b.fl.frequency, 0.13, base * 0.45), lfo(b.g.gain, 0.07, 0.05 * level));
+    const b = bed(out, 'bandpass', base, 0.9, 0.07 * level);
+    nodes.push(b.s, lfo(b.fl.frequency, 0.13, base * 0.45), lfo(b.g.gain, 0.07, 0.025 * level));
   }
   function crickets(out, every, gain) {
     every(0.6, 1.5, t => { const f = rnd(4100, 4600); for (let i = 0; i < 3; i++) tone('sine', f, t + i * 0.06, 0.035, gain, out); });
