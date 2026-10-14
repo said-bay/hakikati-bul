@@ -30,7 +30,8 @@ a{color:var(--accent)}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0}img{max-width:100%}[hidden]{display:none!important}
 .back{align-self:flex-start;font-family:var(--display);font-weight:500;font-size:14px;letter-spacing:.08em;color:var(--dim);text-decoration:none;border:2px solid var(--line);padding:5px 10px}
-.back:hover,.back:focus-visible{color:var(--deep);background:var(--accent);border-color:var(--accent);outline:none}
+.back:active,.back:focus-visible{color:var(--deep);background:var(--accent);border-color:var(--accent);outline:none}
+@media (hover:hover) and (pointer:fine){.back:hover{color:var(--deep);background:var(--accent);border-color:var(--accent)}}
 </style>
 </head>
 <body>
